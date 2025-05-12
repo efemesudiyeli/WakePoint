@@ -11,7 +11,6 @@ import SwiftUI
 @Observable
 class MapViewModel {
     var circleColor: Color = .blue.opacity(0.5)
-    var vibrationSeconds: Int = 10
     var position = MapCameraPosition.region(
         MKCoordinateRegion(
             center: CLLocationCoordinate2D(latitude: 39.9208, longitude: 32.8541),
@@ -48,6 +47,17 @@ class MapViewModel {
     func resetDestination() -> Void {
         destination = nil
     }
+    
+    func fetchSettings() {
+        if let colorString: String = UserDefaults.standard.value(forKey: "CircleColor") as? String {
+            if let color = Color(hex: colorString) {
+                circleColor = color
+            }
+        }
+    }
+    
+   
+  
 }
 
 

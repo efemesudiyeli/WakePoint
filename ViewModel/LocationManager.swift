@@ -17,7 +17,7 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
     var currentLocation: CLLocation?
     var destinationCoordinate: CLLocationCoordinate2D?
     private var hasVibrated = false
-    var vibrateDistance: CircleDistance = .veryLong
+    var circleDistance: CircleDistance = .long
     var vibrateSeconds: VibrateSeconds = .long
     var isUserReachedDistance = false
 
@@ -45,6 +45,25 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
         }
     }
     
+    func saveSettings() {
+        UserDefaults.standard
+            .set(circleDistance.rawValue, forKey: "CircleDistance")
+        UserDefaults.standard
+            .set(vibrateSeconds.rawValue, forKey: "VibrateSeconds")
+    }
+    
+    func fetchSettings() {
+        if let rawDistance = UserDefaults.standard.value(forKey: "CircleDistance") as? Double,
+           let distance = CircleDistance(rawValue: rawDistance) {
+            circleDistance = distance
+        }
+        
+        if let rawSeconds = UserDefaults.standard.value(forKey: "VibrateSeconds") as? Int,
+           let seconds = VibrateSeconds(rawValue: rawSeconds) {
+            vibrateSeconds = seconds
+        }
+    }
+    
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let location = locations.last else { return }
         currentLocation = location
@@ -53,7 +72,7 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
             let destinationLocation = CLLocation(latitude: destination.latitude, longitude: destination.longitude)
             let distance = location.distance(from: destinationLocation)
             
-            isUserReachedDistance = distance <= vibrateDistance.rawValue
+            isUserReachedDistance = distance <= circleDistance.rawValue
             if isUserReachedDistance && !hasVibrated {
                 hasVibrated = true
                 vibratePhone(seconds: vibrateSeconds.rawValue)

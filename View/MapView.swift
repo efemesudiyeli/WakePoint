@@ -16,7 +16,6 @@ struct MapView: View {
     @State var isSearchResultsPresented = false
     @State var isDestinationLocked = false
     
-    
     var body: some View {
         MapReader { reader in
             ZStack(alignment: .bottomTrailing) {
@@ -27,7 +26,7 @@ struct MapView: View {
                         if let currentLocationCoordinate = locationManager.currentLocation?.coordinate {
                             MapCircle(
                                 center: currentLocationCoordinate,
-                                radius: locationManager.vibrateDistance.rawValue
+                                radius: locationManager.circleDistance.rawValue
                             ).foregroundStyle(mapViewModel.circleColor)
                         }
                         
@@ -147,7 +146,11 @@ struct MapView: View {
                     )
                     locationManager.destinationCoordinate = tappedCoord
                 }
-            } 
+            }
+            .onAppear {
+                locationManager.fetchSettings()
+                mapViewModel.fetchSettings()
+            }
         }
     }
 }

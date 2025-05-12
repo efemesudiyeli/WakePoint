@@ -13,17 +13,28 @@ struct SettingsView: View {
     var body: some View {
         List {
             Section {
-                Picker("Circle Distance",   selection: $locationManager.vibrateDistance) {
+                Picker("Circle Distance", selection: $locationManager.circleDistance) {
                     ForEach(CircleDistance.allCases.sorted(by: { $0.rawValue < $1.rawValue }),id: \.self) { distance in
                         Text("\(Int(distance.rawValue)) m")
+                            .tag(distance)
                     }
                 }
                 .pickerStyle(.segmented)
-                .onChange(of: locationManager.vibrateDistance) { _, newValue in
-                    locationManager.vibrateDistance = newValue
+                .onChange(of: locationManager.circleDistance) { _, newValue in
+                    locationManager.circleDistance = newValue
+                    locationManager.saveSettings()
                 }
                 
                 ColorPicker("Color", selection: $mapViewModel.circleColor, supportsOpacity: true)
+                    .onChange(of: mapViewModel.circleColor) {
+ oldValue,
+ newValue in
+                        UserDefaults.standard
+                            .set(
+                                Color.toHex(mapViewModel.circleColor)(),
+                                forKey: "CircleColor"
+                            )
+                    }
                 
             } header: {
                 Text("Circle Settings")
@@ -32,18 +43,24 @@ struct SettingsView: View {
             Section {Picker("Vibration Time",selection: $locationManager.vibrateSeconds) {
                     ForEach(VibrateSeconds.allCases.sorted(by: { $0.rawValue < $1.rawValue }),id: \.self) { distance in
                         Text("\(Int(distance.rawValue)) seconds")
+                            .tag(distance)
                     }
                 }
                 .pickerStyle(.segmented)
                 .onChange(of: locationManager.vibrateSeconds) { _, newValue in
                     locationManager.vibrateSeconds = newValue
+                    locationManager.saveSettings()
                 }
             } header: {
                 Text("Vibration Time")
             }
         }
         .listStyle(.insetGrouped)
+        .onAppear {
+            locationManager.fetchSettings()
+        }
     }
+        
 }
 
 #Preview {
