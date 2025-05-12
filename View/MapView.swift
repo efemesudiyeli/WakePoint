@@ -1,10 +1,3 @@
-//
-//  ContentView.swift
-//  WakeupMap
-//
-//  Created by Efe Mesudiyeli on 4.05.2025.
-//
-
 import SwiftUI
 import MapKit
 import CoreLocation
@@ -15,14 +8,19 @@ struct MapView: View {
     @State var isSettingsViewPresented = false
     @State var isSearchResultsPresented = false
     @State var isDestinationLocked = false
+    @State private var route: MKRoute?
+    @State private var showRouteConfirmation = false
     
     var body: some View {
+    
         MapReader { reader in
             ZStack(alignment: .bottomTrailing) {
                 Map(
                     position: $mapViewModel.position,
-                    interactionModes: .all){
+                    interactionModes: .all,
+                    content: {
                         UserAnnotation()
+                        
                         if let currentLocationCoordinate = locationManager.currentLocation?.coordinate {
                             MapCircle(
                                 center: currentLocationCoordinate,
@@ -51,8 +49,15 @@ struct MapView: View {
                                     .frame(width: 30, height: 30)
                                     .foregroundColor(.red)
                             }
+                            
+                        }
+                        
+                        if let route = route {
+                            MapPolyline(route.polyline)
+                                .stroke(Color.blue, lineWidth: 5)
                         }
                     }
+                )
                 
                 HStack {
                     Button {
@@ -72,8 +77,9 @@ struct MapView: View {
                     .padding(12)
                     .background(RoundedRectangle(cornerRadius: 8).fill(Color.white))
                     .shadow(radius: 30)
-                }  .padding(.bottom, 6)
-                    .padding(.trailing, 14)
+                }
+                .padding(.bottom, 6)
+                .padding(.trailing, 14)
                 
                 TextField(
                     "Search for a place...",
@@ -107,6 +113,27 @@ struct MapView: View {
                         }.presentationDetents([PresentationDetent.medium])
                     }
                 }
+                .alert("Start Navigation?", isPresented: $showRouteConfirmation) {
+                    Button("Start") {
+                        isDestinationLocked = true
+                        let request = MKDirections.Request()
+                        request.source = MKMapItem(placemark: MKPlacemark(coordinate: locationManager.currentLocation?.coordinate ?? .init()))
+                        request.destination = MKMapItem(placemark: MKPlacemark(coordinate: mapViewModel.destination?.coordinate ?? .init()))
+                        request.transportType = .automobile
+                        
+                        let directions = MKDirections(request: request)
+                        directions.calculate { response, error in
+                            if let route = response?.routes.first {
+                                self.route = route
+                            }
+                        }
+                    }
+                    Button("Cancel", role: .cancel) {
+                        mapViewModel.destination = nil
+                        locationManager.destinationCoordinate = nil
+                        route = nil
+                    }
+                }
             }
             .mapControls{
                 MapScaleView()
@@ -138,6 +165,7 @@ struct MapView: View {
                     .presentationDragIndicator(.visible)
                 }
             )
+
             .onTapGesture { screenCoord in
                 if let tappedCoord = reader.convert(screenCoord, from: .local) {
                     if isDestinationLocked { return }
@@ -145,8 +173,10 @@ struct MapView: View {
                         coordinate: tappedCoord
                     )
                     locationManager.destinationCoordinate = tappedCoord
+                    showRouteConfirmation = true
                 }
             }
+            
             .onAppear {
                 locationManager.fetchSettings()
                 mapViewModel.fetchSettings()
