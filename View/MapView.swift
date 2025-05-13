@@ -2,17 +2,20 @@ import SwiftUI
 import MapKit
 import CoreLocation
 
+
+
 struct MapView: View {
     @State var locationManager = LocationManager()
     @State var mapViewModel = MapViewModel()
     @State var isSettingsViewPresented = false
     @State var isSearchResultsPresented = false
-    @State var isDestinationLocked = false
-    @State private var route: MKRoute?
+    @State var route: MKRoute?
     @State private var showRouteConfirmation = false
     
-    var body: some View {
     
+    
+    var body: some View {
+        
         MapReader { reader in
             ZStack(alignment: .bottomTrailing) {
                 Map(
@@ -70,9 +73,9 @@ struct MapView: View {
                     .shadow(radius: 30)
                     
                     Button {
-                        isDestinationLocked.toggle()
+                        mapViewModel.isDestinationLocked.toggle()
                     } label: {
-                        Image(systemName: (isDestinationLocked ? "lock.fill" : "lock.open.fill"))
+                        Image(systemName: (mapViewModel.isDestinationLocked ? "lock.fill" : "lock.open.fill"))
                     }
                     .padding(12)
                     .background(RoundedRectangle(cornerRadius: 8).fill(Color.white))
@@ -113,33 +116,27 @@ struct MapView: View {
                         }.presentationDetents([PresentationDetent.medium])
                     }
                 }
-                .alert("Start Navigation?", isPresented: $showRouteConfirmation) {
-                    Button("Start") {
-                        isDestinationLocked = true
-                        let request = MKDirections.Request()
-                        request.source = MKMapItem(placemark: MKPlacemark(coordinate: locationManager.currentLocation?.coordinate ?? .init()))
-                        request.destination = MKMapItem(placemark: MKPlacemark(coordinate: mapViewModel.destination?.coordinate ?? .init()))
-                        request.transportType = .automobile
-                        
-                        let directions = MKDirections(request: request)
-                        directions.calculate { response, error in
-                            if let route = response?.routes.first {
-                                self.route = route
-                            }
-                        }
-                    }
-                    Button("Cancel", role: .cancel) {
-                        mapViewModel.destination = nil
-                        locationManager.destinationCoordinate = nil
-                        route = nil
-                    }
-                }
             }
             .mapControls{
                 MapScaleView()
                 MapPitchToggle()
                 MapUserLocationButton()
                 MapCompass()
+            }
+            .sheet(isPresented: $showRouteConfirmation) {
+                MarkedLocationSheetView(
+                    locationManager: locationManager,
+                    mapViewModel: mapViewModel,
+                    locationTitle: mapViewModel.destinationAddress?.name ?? "Title not available",
+                    distanceToUser: mapViewModel.destinationDistance ?? "N/A",
+                    minutesToUser: mapViewModel.destinationDistanceMinutes ?? "N/A",
+                    address: mapViewModel.destinationAddress,
+                    coordinates: mapViewModel.destination?.coordinate,
+                    route: $route
+                )
+                .presentationDetents([PresentationDetent.medium])
+                .presentationDragIndicator(.hidden)
+                
             }
             .sheet(isPresented: $isSettingsViewPresented) {
                 SettingsView(
@@ -165,22 +162,50 @@ struct MapView: View {
                     .presentationDragIndicator(.visible)
                 }
             )
-
             .onTapGesture { screenCoord in
                 if let tappedCoord = reader.convert(screenCoord, from: .local) {
-                    if isDestinationLocked { return }
+                    if mapViewModel.isDestinationLocked { return }
                     mapViewModel.destination = Destination(
                         coordinate: tappedCoord
                     )
                     locationManager.destinationCoordinate = tappedCoord
                     showRouteConfirmation = true
+                    
+                    mapViewModel.fetchAddress(for: tappedCoord) { address in
+                        mapViewModel.destinationAddress = address
+                    }
+                    
+                    if let userCoordinate = locationManager.currentLocation?.coordinate {
+                        mapViewModel
+                            .calculateRoute(
+                                from: userCoordinate,
+                                to: tappedCoord) { distance, minutes in
+                                    mapViewModel.destinationDistance = distance
+                                    mapViewModel.destinationDistanceMinutes = minutes
+                                }
+                    }
+                    
+                    
                 }
             }
             
             .onAppear {
                 locationManager.fetchSettings()
                 mapViewModel.fetchSettings()
+                
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                    withAnimation {
+                        if let userCoordinate = locationManager.currentLocation?.coordinate {
+                            mapViewModel.position = MapCameraPosition.region(
+                                MKCoordinateRegion(
+                                    center: userCoordinate,
+                                    span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)))
+                        }
+                    }
+                }
+                
             }
+            
         }
     }
 }

@@ -18,6 +18,10 @@ class MapViewModel {
     
     var destination: Destination? = nil
     var clickedLocationOnSearch: MKPlacemark? = nil
+    var destinationAddress: Address? = nil
+    var destinationDistanceMinutes: String? = nil
+    var destinationDistance: String? = nil
+    var isDestinationLocked: Bool = false
     
     func centerPositionToLocation(position: CLLocationCoordinate2D) -> Void {
         withAnimation {
@@ -56,8 +60,65 @@ class MapViewModel {
         }
     }
     
+    func fetchAddress(
+        for coordinates: CLLocationCoordinate2D,
+        completion: @escaping (Address?) -> Void
+    ) {
+        let geocoder = CLGeocoder()
+        let location = CLLocation(latitude: coordinates.latitude, longitude: coordinates.longitude)
+        
+        geocoder.reverseGeocodeLocation(location) {
+ placemarks,
+ error in
+            if let placemark = placemarks?.first {
+                completion(
+                    Address(
+                    name: placemark.name,
+                    locality: placemark.locality,
+                    country: placemark.country,
+                    city: placemark.administrativeArea,
+                    postalCode: placemark.postalCode,
+                    subLocality: placemark.subLocality
+                    
+                ))
+            } else {
+                completion(nil)
+            }
+        }
+    }
+    
+    func calculateRoute(from start: CLLocationCoordinate2D, to end: CLLocationCoordinate2D, completion: @escaping (String?, String?) -> Void) {
+        print("Start Coordinate: \(start)")
+        print("End Coordinate: \(end)")
+        
+        let startPlacemark = MKPlacemark(coordinate: start)
+        let endPlacemark = MKPlacemark(coordinate: end)
+        
+        let request = MKDirections.Request()
+        request.source = MKMapItem(placemark: startPlacemark)
+        request.destination = MKMapItem(placemark: endPlacemark)
+        request.transportType = .automobile
+
+        let directions = MKDirections(request: request)
+        directions.calculate { response, error in
+            if let error = error {
+                print("Error calculating route: \(error.localizedDescription)")
+                completion(nil, nil)
+                return
+            }
+            
+            guard let route = response?.routes.first else {
+                print("No route found")
+                completion(nil, nil)
+                return
+            }
+            
+            let distance = String(format: "%.1f km", route.distance / 1000)
+            let minutes = "\(Int(route.expectedTravelTime / 60)) min"
+            print("Distance: \(distance), Minutes: \(minutes)")
+            completion(distance, minutes)
+        }
+    }
    
   
 }
-
-
