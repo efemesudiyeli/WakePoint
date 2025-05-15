@@ -5,7 +5,7 @@
 //  Created by Efe Mesudiyeli on 13.05.2025.
 //
 
-struct Address {
+struct Address: Codable {
     let name: String?
     let locality: String?
     let country: String?

@@ -7,6 +7,7 @@
 import Foundation
 import MapKit
 import SwiftUI
+import UIKit
 
 @Observable
 class MapViewModel {
@@ -14,44 +15,49 @@ class MapViewModel {
     var position = MapCameraPosition.region(
         MKCoordinateRegion(
             center: CLLocationCoordinate2D(latitude: 39.9208, longitude: 32.8541),
-            span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)))
-    
-    var destination: Destination? = nil
-    var clickedLocationOnSearch: MKPlacemark? = nil
-    var destinationAddress: Address? = nil
-    var destinationDistanceMinutes: String? = nil
-    var destinationDistance: String? = nil
+            span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
+        ))
+
+    var canSaveNewDestinations: Bool = true
+    var destination: Destination?
+    var destinationAddress: Address?
+    var destinationDistanceMinutes: String?
+    var destinationDistance: String?
     var isDestinationLocked: Bool = false
-    
-    func centerPositionToLocation(position: CLLocationCoordinate2D) -> Void {
+    var savedDestinations: [Destination] = []
+    var notificationFeedbackGenerator: UINotificationFeedbackGenerator = .init()
+
+    func centerPositionToLocation(position: CLLocationCoordinate2D) {
         withAnimation {
             self.position = MapCameraPosition.region(
                 MKCoordinateRegion(
                     center: position,
-                    span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)))
+                    span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+                ))
         }
     }
-    
+
     var searchQuery = ""
     var searchResults: [MKMapItem] = []
-    
+
     func search() {
         let request = MKLocalSearch.Request()
         request.naturalLanguageQuery = searchQuery
 
         let search = MKLocalSearch(request: request)
-        search.start { response, error in
+        search.start { response, _ in
             guard let items = response?.mapItems else { return }
             DispatchQueue.main.async {
                 self.searchResults = items
             }
         }
     }
-    
-    func resetDestination() -> Void {
+
+    func resetDestination() {
         destination = nil
+        isDestinationLocked = false
     }
-    
+
     func fetchSettings() {
         if let colorString: String = UserDefaults.standard.value(forKey: "CircleColor") as? String {
             if let color = Color(hex: colorString) {
@@ -59,41 +65,41 @@ class MapViewModel {
             }
         }
     }
-    
+
     func fetchAddress(
         for coordinates: CLLocationCoordinate2D,
         completion: @escaping (Address?) -> Void
     ) {
         let geocoder = CLGeocoder()
         let location = CLLocation(latitude: coordinates.latitude, longitude: coordinates.longitude)
-        
+
         geocoder.reverseGeocodeLocation(location) {
- placemarks,
- error in
+            placemarks,
+                _ in
             if let placemark = placemarks?.first {
                 completion(
                     Address(
-                    name: placemark.name,
-                    locality: placemark.locality,
-                    country: placemark.country,
-                    city: placemark.administrativeArea,
-                    postalCode: placemark.postalCode,
-                    subLocality: placemark.subLocality
-                    
-                ))
+                        name: placemark.name,
+                        locality: placemark.locality,
+                        country: placemark.country,
+                        city: placemark.administrativeArea,
+                        postalCode: placemark.postalCode,
+                        subLocality: placemark.subLocality
+
+                    ))
             } else {
                 completion(nil)
             }
         }
     }
-    
+
     func calculateRoute(from start: CLLocationCoordinate2D, to end: CLLocationCoordinate2D, completion: @escaping (String?, String?) -> Void) {
         print("Start Coordinate: \(start)")
         print("End Coordinate: \(end)")
-        
+
         let startPlacemark = MKPlacemark(coordinate: start)
         let endPlacemark = MKPlacemark(coordinate: end)
-        
+
         let request = MKDirections.Request()
         request.source = MKMapItem(placemark: startPlacemark)
         request.destination = MKMapItem(placemark: endPlacemark)
@@ -106,19 +112,65 @@ class MapViewModel {
                 completion(nil, nil)
                 return
             }
-            
+
             guard let route = response?.routes.first else {
                 print("No route found")
                 completion(nil, nil)
                 return
             }
-            
+
             let distance = String(format: "%.1f km", route.distance / 1000)
             let minutes = "\(Int(route.expectedTravelTime / 60)) min"
             print("Distance: \(distance), Minutes: \(minutes)")
             completion(distance, minutes)
         }
     }
-   
-  
+
+    func saveDestinations(destination: Destination) {
+        savedDestinations.append(destination)
+
+        do {
+            let data = try JSONEncoder().encode(savedDestinations)
+            UserDefaults.standard.set(data, forKey: "SavedDestinations")
+        } catch {
+            print("Failed to save destinations: \(error.localizedDescription)")
+        }
+    }
+
+    func loadDestinations() {
+        guard let data = UserDefaults.standard.data(forKey: "SavedDestinations") else { return }
+        do {
+            savedDestinations = try JSONDecoder()
+                .decode([Destination].self, from: data)
+            print(savedDestinations)
+        } catch {
+            print("Failed to load destinations: \(error.localizedDescription)")
+        }
+    }
+
+    func deleteDestination(destination: Destination) {
+        if let index = savedDestinations.firstIndex(where: { $0.id == destination.id }) {
+            savedDestinations.remove(at: index)
+
+            do {
+                let data = try JSONEncoder().encode(savedDestinations)
+                UserDefaults.standard.set(data, forKey: "SavedDestinations")
+            } catch {
+                print("Failed to save destinations after deletion: \(error.localizedDescription)")
+            }
+        }
+    }
+
+    func renameDestination(destination: Destination, name: String) {
+        if let index = savedDestinations.firstIndex(where: { $0.id == destination.id }) {
+            savedDestinations[index].name = name
+
+            do {
+                let data = try JSONEncoder().encode(savedDestinations)
+                UserDefaults.standard.set(data, forKey: "SavedDestinations")
+            } catch {
+                print("Failed to save destinations after renaming: \(error.localizedDescription)")
+            }
+        }
+    }
 }

@@ -5,10 +5,10 @@
 //  Created by Efe Mesudiyeli on 4.05.2025.
 //
 
-import CoreLocation
-import UIKit
-import SwiftUICore
 import AudioToolbox
+import CoreLocation
+import SwiftUICore
+import UIKit
 import UserNotifications
 
 @Observable
@@ -37,41 +37,43 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
             let impactGenerator = UIImpactFeedbackGenerator(style: .heavy)
             impactGenerator.impactOccurred()
             AudioServicesPlaySystemSound(kSystemSoundID_Vibrate)
-            
+
             elapsed += 1
             if elapsed >= seconds {
                 timer.invalidate()
             }
         }
     }
-    
+
     func saveSettings() {
         UserDefaults.standard
             .set(circleDistance.rawValue, forKey: "CircleDistance")
         UserDefaults.standard
             .set(vibrateSeconds.rawValue, forKey: "VibrateSeconds")
     }
-    
+
     func fetchSettings() {
         if let rawDistance = UserDefaults.standard.value(forKey: "CircleDistance") as? Double,
-           let distance = CircleDistance(rawValue: rawDistance) {
+           let distance = CircleDistance(rawValue: rawDistance)
+        {
             circleDistance = distance
         }
-        
+
         if let rawSeconds = UserDefaults.standard.value(forKey: "VibrateSeconds") as? Int,
-           let seconds = VibrateSeconds(rawValue: rawSeconds) {
+           let seconds = VibrateSeconds(rawValue: rawSeconds)
+        {
             vibrateSeconds = seconds
         }
     }
-    
-    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+
+    func locationManager(_: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let location = locations.last else { return }
         currentLocation = location
 
         if let destination = destinationCoordinate {
             let destinationLocation = CLLocation(latitude: destination.latitude, longitude: destination.longitude)
             let distance = location.distance(from: destinationLocation)
-            
+
             isUserReachedDistance = distance <= circleDistance.rawValue
             if isUserReachedDistance && !hasVibrated {
                 hasVibrated = true
@@ -83,11 +85,10 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
 
                 let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
                 UNUserNotificationCenter.current().add(request)
-              
             }
         }
     }
-    
+
     func requestNotificationPermission() {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
             if let error = error {
@@ -97,8 +98,8 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
             }
         }
     }
-    
-    func resetDestination() -> Void {
+
+    func resetDestination() {
         isUserReachedDistance = false
         destinationCoordinate = nil
     }
@@ -117,4 +118,3 @@ enum VibrateSeconds: Int, CaseIterable {
     case medium = 10
     case long = 15
 }
-

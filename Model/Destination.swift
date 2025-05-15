@@ -6,7 +6,9 @@
 //
 import MapKit
 
-struct Destination: Identifiable {
-    var id = UUID()
+struct Destination: Identifiable, Codable {
+    var id = UUID().uuidString
+    var name: String? = nil
+    var address: Address? = nil
     var coordinate: CLLocationCoordinate2D
 }
