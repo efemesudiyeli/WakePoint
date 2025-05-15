@@ -1,6 +1,6 @@
 //
 //  SettingsView.swift
-//  WakeupMap
+//  WakePoint
 //
 //  Created by Efe Mesudiyeli on 5.05.2025.
 //

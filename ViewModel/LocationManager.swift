@@ -1,6 +1,6 @@
 //
 //  LocationManager.swift
-//  WakeupMap
+//  WakePoint
 //
 //  Created by Efe Mesudiyeli on 4.05.2025.
 //

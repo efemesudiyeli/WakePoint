@@ -1,6 +1,6 @@
 //
 //  OnboardingView.swift
-//  WakeupMap
+//  WakePoint
 //
 //  Created by Efe Mesudiyeli on 15.05.2025.
 //
@@ -18,8 +18,8 @@ struct OnboardingView: View {
     @State private var isSearchResultsPresented = false
     @State var fakeRoute: MKRoute?
     @State var route: MKRoute?
-    @State var distance: String?
-    @State var minutes: String?
+    @State var distance: LocalizedStringKey?
+    @State var minutes: LocalizedStringKey?
     @State private var showRouteConfirmation = false
     @State private var isSavedDestinationsPresented = false
     @Binding var hasLaunchedBefore: Bool
@@ -49,7 +49,7 @@ struct OnboardingView: View {
                         // Fake User Location Annotation
                     
                         Annotation(
-                            "You",
+                            LocalizedStringKey("You"),
                             coordinate: fakeUserCoordinate
                         ) {
                             ZStack {
@@ -73,7 +73,10 @@ struct OnboardingView: View {
                         
                         
                         if onboardingStep >= 1 {
-                            Annotation("Your Destination", coordinate: fakeDestinationCoordinate) {
+                            Annotation(
+                                LocalizedStringKey("Your Destination"),
+                                coordinate: fakeDestinationCoordinate
+                            ) {
                                 ZStack(alignment: .topTrailing) {
                                     Image(systemName: "mappin.circle.fill")
                                         .resizable()

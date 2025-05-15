@@ -1,6 +1,6 @@
 //
 //  MarkedLocationSheetView.swift
-//  WakeupMap
+//  WakePoint
 //
 //  Created by Efe Mesudiyeli on 13.05.2025.
 //
@@ -18,8 +18,8 @@ struct MarkedLocationSheetView: View {
     @State var isSaved: Bool = false
 
     var locationTitle: String
-    var distanceToUser: String
-    var minutesToUser: String
+    var distanceToUser: LocalizedStringKey
+    var minutesToUser: LocalizedStringKey
     var address: Address?
     var coordinates: CLLocationCoordinate2D?
     @Binding var route: MKRoute?
@@ -29,7 +29,7 @@ struct MarkedLocationSheetView: View {
             Text(locationTitle)
                 .font(.largeTitle)
                 .fontWeight(.heavy)
-            Text("Marked Location - \(distanceToUser) away")
+            Text("Marked Location - ") + Text(distanceToUser) + Text(" away")
 
             Spacer()
 

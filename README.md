@@ -1,6 +1,6 @@
-# 🗺️ WakeupMap
+# 🗺️ WakePoint
 
-**WakeupMap** is a personal iOS project built with SwiftUI and MapKit that notifies users when they get close to a selected destination on the map. It is designed to demonstrate my SwiftUI skills and practical use of Apple's location APIs.
+**WakePoint** is a personal iOS project built with SwiftUI and MapKit that notifies users when they get close to a selected destination on the map. It is designed to demonstrate my SwiftUI skills and practical use of Apple's location APIs.
 
 > ⚠️ This is an open-source project, but I do **not accept contributions**. The project is intended to showcase my work and serve as part of my developer portfolio.
 

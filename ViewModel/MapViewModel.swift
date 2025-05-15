@@ -1,6 +1,6 @@
 //
 //  ViewModel.swift
-//  WakeupMap
+//  WakePoint
 //
 //  Created by Efe Mesudiyeli on 4.05.2025.
 //
@@ -21,8 +21,8 @@ class MapViewModel {
     var canSaveNewDestinations: Bool = true
     var destination: Destination?
     var destinationAddress: Address?
-    var destinationDistanceMinutes: String?
-    var destinationDistance: String?
+    var destinationDistanceMinutes: LocalizedStringKey?
+    var destinationDistance: LocalizedStringKey?
     var isDestinationLocked: Bool = false
     var savedDestinations: [Destination] = []
     var notificationFeedbackGenerator: UINotificationFeedbackGenerator = .init()
@@ -100,7 +100,11 @@ class MapViewModel {
     func calculateRoute(
         from start: CLLocationCoordinate2D,
         to end: CLLocationCoordinate2D,
-        completion: @escaping (String?, String?, MKRoute?) -> Void
+        completion: @escaping (
+            LocalizedStringKey?,
+            LocalizedStringKey?,
+            MKRoute?
+        ) -> Void
     ) {
         print("Start Coordinate: \(start)")
         print("End Coordinate: \(end)")
@@ -114,7 +118,9 @@ class MapViewModel {
         request.transportType = .automobile
 
         let directions = MKDirections(request: request)
-        directions.calculate { response, error in
+        directions.calculate {
+ response,
+ error in
             if let error {
                 print("Error calculating route: \(error.localizedDescription)")
                 completion(nil, nil, nil)
@@ -127,8 +133,11 @@ class MapViewModel {
                 return
             }
 
-            let distance = String(format: "%.1f km", route.distance / 1000)
-            let minutes = "\(Int(route.expectedTravelTime / 60)) min"
+            let distance: LocalizedStringKey = LocalizedStringKey( String(
+                format: "%.1f km",
+                route.distance / 1000
+            ))
+            let minutes: LocalizedStringKey = "\(Int(route.expectedTravelTime / 60)) min"
             print("Distance: \(distance), Minutes: \(minutes)")
             completion(distance, minutes, route)
         }

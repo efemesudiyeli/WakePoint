@@ -1,6 +1,6 @@
 //
 //  Address.swift
-//  WakeupMap
+//  WakePoint
 //
 //  Created by Efe Mesudiyeli on 13.05.2025.
 //

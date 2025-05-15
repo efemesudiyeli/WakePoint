@@ -1,6 +1,6 @@
 //
 //  Color.swift
-//  WakeupMap
+//  WakePoint
 //
 //  Created by Efe Mesudiyeli on 12.05.2025.
 //

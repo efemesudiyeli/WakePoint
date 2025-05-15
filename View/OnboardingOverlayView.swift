@@ -47,16 +47,16 @@ struct OnboardingOverlayView: View {
         
     }
 
-    var stepText: String {
+    var stepText: LocalizedStringKey {
         switch step {
         case 0:
-            "Bu haritadan konumunuzu takip edebilirsiniz."
+            "You can track your location on this map."
         case 1:
-            "Harita üzerinde istediğiniz yere tıklayarak bir hedef belirleyebilirsiniz."
+            "You can set a destination by clicking anywhere on the map."
         case 2:
-            "Hedef belirlediğinizde hedefinizin bilgilerini görüntüleyebilir ve hatırlatıcıyı başlat butonuna basarak aktif hale getirebilirsiniz."
+            "When you set a destination, you can view the information of your destination and activate the alarm by pressing the start button."
         case 3:
-            "Mavi daire hedefinize dokunduğu zaman uygulama arkaplanda açık olduğu sürece cihazınız titreyecek ve size haber verecek."
+            "When the blue circle touches your target, your device will vibrate and notify you as long as the app is open in the background."
         default:
             ""
         }

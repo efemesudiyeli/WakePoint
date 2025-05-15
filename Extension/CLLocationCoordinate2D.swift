@@ -1,6 +1,6 @@
 //
 //  CLLocationCoordinate2D.swift
-//  WakeupMap
+//  WakePoint
 //
 //  Created by Efe Mesudiyeli on 15.05.2025.
 //
