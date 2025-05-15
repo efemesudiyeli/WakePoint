@@ -10,7 +10,7 @@ import SwiftUI
 struct CustomTextFieldStyle: TextFieldStyle {
     var backgroundColor: Color = .oppositePrimary
     var cornerRadius: CGFloat = 10
-    var padding: CGFloat = 14
+    @Binding var searchQuery: String
 
     func _body(configuration: TextField<Self._Label>) -> some View {
         HStack {
@@ -18,12 +18,17 @@ struct CustomTextFieldStyle: TextFieldStyle {
                 .foregroundColor(.gray)
 
             configuration
+
+            Button {
+                searchQuery = ""
+            } label: {
+                Text("x")
+            }.disabled(searchQuery.isEmpty)
         }
         .frame(maxWidth: .infinity)
         .padding()
         .background(backgroundColor)
         .cornerRadius(cornerRadius)
-        .shadow(radius: 12)
-        .padding(.bottom, 6)
+        .shadow(radius: 10)
     }
 }

@@ -27,6 +27,10 @@ class MapViewModel {
     var savedDestinations: [Destination] = []
     var notificationFeedbackGenerator: UINotificationFeedbackGenerator = .init()
 
+    // MARK: Change here when release
+
+    var isDeveloperMode: Bool = false
+
     func centerPositionToLocation(position: CLLocationCoordinate2D) {
         withAnimation {
             self.position = MapCameraPosition.region(
@@ -93,7 +97,11 @@ class MapViewModel {
         }
     }
 
-    func calculateRoute(from start: CLLocationCoordinate2D, to end: CLLocationCoordinate2D, completion: @escaping (String?, String?) -> Void) {
+    func calculateRoute(
+        from start: CLLocationCoordinate2D,
+        to end: CLLocationCoordinate2D,
+        completion: @escaping (String?, String?, MKRoute?) -> Void
+    ) {
         print("Start Coordinate: \(start)")
         print("End Coordinate: \(end)")
 
@@ -107,22 +115,22 @@ class MapViewModel {
 
         let directions = MKDirections(request: request)
         directions.calculate { response, error in
-            if let error = error {
+            if let error {
                 print("Error calculating route: \(error.localizedDescription)")
-                completion(nil, nil)
+                completion(nil, nil, nil)
                 return
             }
 
             guard let route = response?.routes.first else {
                 print("No route found")
-                completion(nil, nil)
+                completion(nil, nil, nil)
                 return
             }
 
             let distance = String(format: "%.1f km", route.distance / 1000)
             let minutes = "\(Int(route.expectedTravelTime / 60)) min"
             print("Distance: \(distance), Minutes: \(minutes)")
-            completion(distance, minutes)
+            completion(distance, minutes, route)
         }
     }
 

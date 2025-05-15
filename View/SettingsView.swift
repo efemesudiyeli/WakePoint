@@ -9,6 +9,7 @@ import SwiftUI
 struct SettingsView: View {
     @Bindable var locationManager: LocationManager
     @Bindable var mapViewModel: MapViewModel
+    @Bindable var premiumManager: PremiumManager
 
     var body: some View {
         List {
@@ -54,6 +55,38 @@ struct SettingsView: View {
             } header: {
                 Text("Vibration Time")
             }
+
+            if !premiumManager.isPremium {
+                Section {
+                    Button {} label: {
+                        Label("Buy Premium", systemImage: "star.circle")
+                            .foregroundStyle(
+                                Gradient(
+                                    colors: [
+                                        Color.indigo,
+                                        Color.white,
+                                    ]
+                                )
+                            )
+                    }
+                }
+            }
+
+            if mapViewModel.isDeveloperMode {
+                Section {
+                    Button {
+                        premiumManager.isPremium.toggle()
+                    } label: {
+                        HStack(spacing: 4) {
+                            Text("Toggle Premium")
+                            Text("\(premiumManager.isPremium)")
+                        }
+                    }
+
+                } header: {
+                    Text("DEVELOPER MODE")
+                }
+            }
         }
         .listStyle(.insetGrouped)
         .onAppear {
@@ -65,6 +98,6 @@ struct SettingsView: View {
 #Preview {
     SettingsView(
         locationManager: LocationManager(),
-        mapViewModel: MapViewModel()
+        mapViewModel: MapViewModel(), premiumManager: PremiumManager()
     )
 }

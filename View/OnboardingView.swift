@@ -1,58 +1,103 @@
+//
+//  OnboardingView.swift
+//  WakeupMap
+//
+//  Created by Efe Mesudiyeli on 15.05.2025.
+//
+
 import CoreLocation
 import MapKit
 import SwiftUI
 
-struct MapView: View {
+struct OnboardingView: View {
+    @Environment(\.dismiss) var dismiss
     @State var locationManager = LocationManager()
     @State var mapViewModel = MapViewModel()
     @State var premiumManager = PremiumManager()
     @State private var isSettingsViewPresented = false
     @State private var isSearchResultsPresented = false
+    @State var fakeRoute: MKRoute?
     @State var route: MKRoute?
+    @State var distance: String?
+    @State var minutes: String?
     @State private var showRouteConfirmation = false
     @State private var isSavedDestinationsPresented = false
     @Binding var hasLaunchedBefore: Bool
-
+    @State var fakeUserCoordinate = CLLocationCoordinate2D(
+        latitude: 34.015299,
+        longitude: -118.497400
+    )
+    let fakeDestinationCoordinate = CLLocationCoordinate2D(latitude: 34.012900, longitude: -118.491400)
+    
+    @State var mapCameraPosition: MapCameraPosition = MapCameraPosition.region(MKCoordinateRegion(
+        center: CLLocationCoordinate2D(latitude: 34.013733, longitude: -118.494965),
+        span: MKCoordinateSpan(latitudeDelta: 0.012, longitudeDelta: 0.012)
+    ))
+    
+    @State private var onboardingStep: Int = 0
+    
+   
+    
     var body: some View {
         MapReader { reader in
             ZStack(alignment: .center) {
                 Map(
-                    position: $mapViewModel.position,
+                    position: $mapCameraPosition,
                     interactionModes: .all,
                     content: {
-                        UserAnnotation()
-
-                        if let currentLocationCoordinate = locationManager.currentLocation?.coordinate {
-                            MapCircle(
-                                center: currentLocationCoordinate,
-                                radius: locationManager.circleDistance.rawValue
-                            ).foregroundStyle(mapViewModel.circleColor)
+                        
+                        // Fake User Location Annotation
+                    
+                        Annotation(
+                            "You",
+                            coordinate: fakeUserCoordinate
+                        ) {
+                            ZStack {
+                                Circle()
+                                    .fill(Color.blue.opacity(0.7))
+                                    .frame(width: 20, height: 20)
+                                Circle()
+                                    .stroke(Color.white, lineWidth: 2)
+                                    .frame(width: 24, height: 24)
+                            }
                         }
-
-                        if let destination = mapViewModel.destination {
-                            Annotation(
-                                mapViewModel.destination?.name ?? "Destination",
-                                coordinate: destination.coordinate
-                            ) {
+                        
+                        
+                        MapCircle(
+                            center: fakeUserCoordinate,
+                            radius: 250
+                        )
+                        .foregroundStyle(mapViewModel.circleColor)
+                        
+                        
+                        
+                        
+                        if onboardingStep >= 1 {
+                            Annotation("Your Destination", coordinate: fakeDestinationCoordinate) {
                                 ZStack(alignment: .topTrailing) {
                                     Image(systemName: "mappin.circle.fill")
                                         .resizable()
-                                        .frame(width: 30, height: 30)
+                                        .frame(width: 40, height: 40)
                                         .foregroundColor(.blue)
                                 }
                             }
                         }
-
-                        if let route {
-                            MapPolyline(route.polyline)
+                        
+                        
+                        if let fakeRoute {
+                            MapPolyline(fakeRoute.polyline)
                                 .stroke(Color.blue, lineWidth: 5)
                         }
+                        
                     }
-                )
-
+                ).allowsHitTesting(false)
+                
+                
+                
+                
                 VStack {
                     Spacer()
-
+                    
                     TextField(
                         "Search for a place...",
                         text: $mapViewModel.searchQuery
@@ -61,15 +106,11 @@ struct MapView: View {
                         CustomTextFieldStyle(searchQuery: $mapViewModel.searchQuery)
                     )
                     .padding(.horizontal, 12)
-                    .onSubmit {
-                        guard !mapViewModel.searchQuery.isEmpty else { return }
-                        mapViewModel.search()
-                        isSearchResultsPresented = true
-                    }
-
+                    
+                    
                     HStack {
                         Spacer()
-
+                        
                         Button {
                             isSettingsViewPresented.toggle()
                         } label: {
@@ -81,7 +122,7 @@ struct MapView: View {
                                 .fill(Color.oppositePrimary)
                         )
                         .shadow(radius: 30)
-
+                        
                         Button {
                             mapViewModel.isDestinationLocked.toggle()
                         } label: {
@@ -93,7 +134,7 @@ struct MapView: View {
                                 .fill(Color.oppositePrimary)
                         )
                         .shadow(radius: 30)
-
+                        
                         Button {
                             isSavedDestinationsPresented.toggle()
                         } label: {
@@ -109,6 +150,7 @@ struct MapView: View {
                     .padding(.bottom, 6)
                     .padding(.trailing, 14)
                 }
+                .allowsHitTesting(false)
                 .frame(width: 380)
                 .sheet(isPresented: $isSavedDestinationsPresented) {
                     if !mapViewModel.savedDestinations.isEmpty {
@@ -120,7 +162,7 @@ struct MapView: View {
                                 .font(.footnote)
                                 .foregroundStyle(.gray)
                         }.padding(.top)
-
+                        
                         List {
                             ForEach(mapViewModel.savedDestinations, id: \.id) { destination in
                                 Button {
@@ -139,7 +181,7 @@ struct MapView: View {
                                     }
                                 }
                             }
-
+                            
                             if !premiumManager.isPremium, mapViewModel.savedDestinations.count >= 3 {
                                 Button {} label: {
                                     Label("Buy Premium", systemImage: "star.circle")
@@ -156,7 +198,7 @@ struct MapView: View {
                             }
                         }
                         .presentationDetents([.medium])
-
+                        
                     } else {
                         VStack {
                             Text("😔")
@@ -186,7 +228,7 @@ struct MapView: View {
                                     coordinate: item.placemark.coordinate
                                 )
                                 mapViewModel.searchQuery = ""
-
+                                
                                 if let currentLocation = locationManager.currentLocation {
                                     mapViewModel
                                         .calculateRoute(
@@ -197,7 +239,7 @@ struct MapView: View {
                                             mapViewModel.destinationDistanceMinutes = minutes
                                         }
                                 }
-
+                                
                                 isSearchResultsPresented.toggle()
                                 showRouteConfirmation.toggle()
                             } label: {
@@ -211,125 +253,87 @@ struct MapView: View {
                         }.presentationDetents([PresentationDetent.medium])
                     }
                 }
-            }
-            .mapControls {
-                MapScaleView()
-                MapPitchToggle()
-                MapUserLocationButton()
-                MapCompass()
-            }
-            .sheet(isPresented: $showRouteConfirmation) {
-                MarkedLocationSheetView(
-                    locationManager: locationManager,
-                    mapViewModel: mapViewModel,
-                    premiumManager: premiumManager,
-                    locationTitle: mapViewModel.destination?.name ?? "Title not available",
-                    distanceToUser: mapViewModel.destinationDistance ?? "N/A",
-                    minutesToUser: mapViewModel.destinationDistanceMinutes ?? "N/A",
-                    address: mapViewModel.destination?.address,
-                    coordinates: mapViewModel.destination?.coordinate,
-                    route: $route
-                )
-                .presentationDetents([PresentationDetent.medium])
-                .presentationDragIndicator(.hidden)
-            }
-            .sheet(isPresented: $isSettingsViewPresented) {
-                SettingsView(
-                    locationManager: locationManager,
-                    mapViewModel: mapViewModel, premiumManager: premiumManager
-                )
-                .presentationDetents([PresentationDetent.medium])
-                .presentationDragIndicator(.visible)
-            }
-            .sheet(
-                isPresented: $locationManager.isUserReachedDistance,
-                onDismiss: {
-                    mapViewModel.resetDestination()
-                    locationManager.resetDestination()
-                    route = nil
-                },
-                content: {
-                    VStack {
-                        Spacer()
-                        Text("Wake up you reached your destination nearly!")
-                        Spacer()
-                    }
-                    .presentationDetents([PresentationDetent.medium])
-                    .presentationDragIndicator(.visible)
+                .mapControls {
+                    MapScaleView()
+                    MapPitchToggle()
+                    MapUserLocationButton()
+                    MapCompass()
                 }
-            )
-            .fullScreenCover(isPresented: $hasLaunchedBefore.map { !$0 }) {
-                OnboardingView(hasLaunchedBefore: $hasLaunchedBefore)
-                    .onDisappear {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                            withAnimation {
-                                if let userCoordinate = locationManager.currentLocation?.coordinate {
-                                    mapViewModel.position = MapCameraPosition.region(
-                                        MKCoordinateRegion(
-                                            center: userCoordinate,
-                                            span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
-                                        ))
+                .sheet(isPresented: $showRouteConfirmation) {
+                    if onboardingStep == 2 {
+                        MarkedLocationSheetView(
+                            isOnboarding: true,
+                            locationManager: locationManager,
+                            mapViewModel: mapViewModel,
+                            premiumManager: premiumManager,
+                            locationTitle: "Santa Monica Freeway",
+                            distanceToUser: distance ?? "N/A",
+                            minutesToUser: minutes ?? "N/A",
+                            address: Address(
+                                name: "Santa Monica Freeway",
+                                locality: "Santa Monica",
+                                country: "United States",
+                                city: "Los Angeles",
+                                postalCode: "90401",
+                                subLocality: "CA"
+                            ),
+                            coordinates: fakeDestinationCoordinate,
+                            route: $route
+                        ).onTapGesture {
+                            showRouteConfirmation = false
+                        }
+                      
+                        .presentationDetents([PresentationDetent.medium])
+                        .presentationDragIndicator(.hidden)
+                    }
+                }
+                
+                if onboardingStep < 4 {
+                    OnboardingOverlayView(step: onboardingStep) {
+                        onboardingStep += 1
+                        if onboardingStep == 2 {showRouteConfirmation.toggle()}
+                        if onboardingStep == 2 {
+                            mapViewModel.calculateRoute(from: fakeUserCoordinate, to: fakeDestinationCoordinate) { distance, minutes, route in
+                                print("Fake Route - Distance: \(distance ?? "N/A"), Time: \(minutes ?? "N/A")")
+                                fakeRoute = route
+                                self.distance = distance
+                                self.minutes = minutes
+                            }
+                        }
+                        if onboardingStep == 3 {
+                            locationManager.vibratePhone(seconds: 2)
+                            
+                            let targetCoordinate = CLLocationCoordinate2D(latitude: 34.014030, longitude: -118.492400)
+                            let stepCount = 60
+                            let delay = 0.02
+                            
+                            let latitudeStep = (targetCoordinate.latitude - fakeUserCoordinate.latitude) / Double(stepCount)
+                            let longitudeStep = (targetCoordinate.longitude - fakeUserCoordinate.longitude) / Double(stepCount)
+                            
+                            for step in 1...stepCount {
+                                DispatchQueue.main.asyncAfter(deadline: .now() + delay * Double(step)) {
+                                    withAnimation(.easeInOut(duration: delay)) {
+                                        fakeUserCoordinate.latitude += latitudeStep
+                                        fakeUserCoordinate.longitude += longitudeStep
+                                    }
                                 }
                             }
                         }
-                    }
-            }
-            .onTapGesture { screenCoord in
-                if let tappedCoord = reader.convert(screenCoord, from: .local) {
-                    if mapViewModel.isDestinationLocked { return }
-                    mapViewModel.destination = Destination(
-                        coordinate: tappedCoord
-                    )
-                    
-
-                    mapViewModel.fetchAddress(for: tappedCoord) { address in
-                        mapViewModel.destination?.address = address
-                        mapViewModel.destination?.name = address?.name
-                    }
-
-                    if let userCoordinate = locationManager.currentLocation?.coordinate {
-                        mapViewModel
-                            .calculateRoute(
-                                from: userCoordinate,
-                                to: tappedCoord
-                            ) { distance, minutes, _ in
-                                mapViewModel.destinationDistance = distance
-                                mapViewModel.destinationDistanceMinutes = minutes
-                            }
-                    }
-                    showRouteConfirmation = true
-                }
-            }
-            .onAppear {
-                locationManager.fetchSettings()
-                mapViewModel.fetchSettings()
-                mapViewModel.loadDestinations()
-                
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                    withAnimation {
-                        if let userCoordinate = locationManager.currentLocation?.coordinate {
-                            mapViewModel.position = MapCameraPosition.region(
-                                MKCoordinateRegion(
-                                    center: userCoordinate,
-                                    span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
-                                ))
+                        if onboardingStep == 4 {
+                            hasLaunchedBefore = true
+                            UserDefaults.standard.set(true, forKey: "HasLaunchedBefore")
+                            dismiss()
                         }
-                    }
+                        
+                    }.frame(maxHeight: .infinity)
                 }
+                  
             }
+           
         }
     }
 }
 
 #Preview {
-    MapView(hasLaunchedBefore: .constant(false))
-}
-
-extension Binding where Value == Bool {
-    func map(_ transform: @escaping (Bool) -> Bool) -> Binding<Bool> {
-        Binding<Bool>(
-            get: { transform(self.wrappedValue) },
-            set: { newValue in self.wrappedValue = !newValue }
-        )
-    }
+    OnboardingView(hasLaunchedBefore: .constant(false))
 }

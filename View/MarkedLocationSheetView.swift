@@ -9,6 +9,7 @@ import MapKit
 import SwiftUI
 
 struct MarkedLocationSheetView: View {
+    @State var isOnboarding = false
     @Bindable var locationManager: LocationManager
     @Bindable var mapViewModel: MapViewModel
     @Environment(\.dismiss) private var dismiss
@@ -48,7 +49,7 @@ struct MarkedLocationSheetView: View {
                         address?.country,
                         address?.postalCode,
                     ]
-                    .compactMap { $0 }
+                    .compactMap(\.self)
                     .joined(separator: ", ")
                 )
                 .multilineTextAlignment(.leading)
@@ -56,7 +57,7 @@ struct MarkedLocationSheetView: View {
 
                 Divider()
 
-                if let coordinates = coordinates {
+                if let coordinates {
                     Text("Coordinates")
                         .fontWeight(.bold)
                     Text("\(coordinates.latitude), \(coordinates.longitude)")
@@ -96,7 +97,7 @@ struct MarkedLocationSheetView: View {
                     .background(
                         RoundedRectangle(cornerRadius: 12)
                     )
-                }
+                }.disabled(isOnboarding)
 
                 Button {
                     guard mapViewModel.canSaveNewDestinations else {
@@ -105,7 +106,7 @@ struct MarkedLocationSheetView: View {
                             .notificationOccurred(.error)
                         return
                     }
-                    if let coordinates = coordinates {
+                    if let coordinates {
                         mapViewModel
                             .saveDestinations(
                                 destination: Destination(
@@ -121,7 +122,6 @@ struct MarkedLocationSheetView: View {
                             isSaved = true
                         }
 
-                        // 2 saniye sonra eski haline getir
                         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
                             withAnimation {
                                 isSaved = false
@@ -144,7 +144,7 @@ struct MarkedLocationSheetView: View {
                     .background(
                         RoundedRectangle(cornerRadius: 12)
                     )
-                }
+                }.disabled(isOnboarding)
 
                 Button {
                     dismiss()
@@ -163,7 +163,7 @@ struct MarkedLocationSheetView: View {
                         RoundedRectangle(cornerRadius: 12)
                             .fill(Color.red)
                     )
-                }
+                }.disabled(isOnboarding)
                 Spacer()
             }
         }
@@ -175,12 +175,19 @@ struct MarkedLocationSheetView: View {
                 mapViewModel.canSaveNewDestinations = true
             }
         }
+        .onAppear {
+            if !premiumManager.isPremium, mapViewModel.savedDestinations.count >= 3 {
+                mapViewModel.canSaveNewDestinations = false
+            } else {
+                mapViewModel.canSaveNewDestinations = true
+            }
+        }
         .onDisappear {
-            if !mapViewModel.isDestinationLocked {
+            
                 mapViewModel.destination = nil
                 locationManager.destinationCoordinate = nil
                 route = nil
-            }
+            
         }
         .alert(
             "Premium Needed",

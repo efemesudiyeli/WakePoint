@@ -31,7 +31,7 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
         requestNotificationPermission()
     }
 
-    fileprivate func vibratePhone(seconds: Int) {
+    func vibratePhone(seconds: Int) {
         var elapsed = 0
         Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { timer in
             let impactGenerator = UIImpactFeedbackGenerator(style: .heavy)
@@ -75,7 +75,7 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
             let distance = location.distance(from: destinationLocation)
 
             isUserReachedDistance = distance <= circleDistance.rawValue
-            if isUserReachedDistance && !hasVibrated {
+            if isUserReachedDistance, !hasVibrated {
                 hasVibrated = true
                 vibratePhone(seconds: vibrateSeconds.rawValue)
                 let content = UNMutableNotificationContent()
@@ -91,7 +91,7 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
 
     func requestNotificationPermission() {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
-            if let error = error {
+            if let error {
                 print("Bildirim izni hatası: \(error)")
             } else {
                 print("Bildirim izni verildi: \(granted)")

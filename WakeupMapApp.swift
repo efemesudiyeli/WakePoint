@@ -9,9 +9,11 @@ import SwiftUI
 
 @main
 struct WakeupMapApp: App {
+    @State private var hasLaunchedBefore: Bool = UserDefaults.standard.bool(forKey: "HasLaunchedBefore")
+
     var body: some Scene {
         WindowGroup {
-            MapView()
+            MapView(hasLaunchedBefore: $hasLaunchedBefore)
         }
     }
 }
