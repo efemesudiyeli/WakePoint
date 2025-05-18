@@ -30,18 +30,16 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
         locationManager.pausesLocationUpdatesAutomatically = false
         requestNotificationPermission()
     }
-    
+
     func stopBackgroundUpdatingLocation() {
         locationManager.allowsBackgroundLocationUpdates = false
         print("Stopping background updating location")
     }
-    
+
     func startBackgroundUpdatingLocation() {
         locationManager.allowsBackgroundLocationUpdates = true
         print("Starting background updating location")
-
     }
-
 
     func vibratePhone(seconds: Int) {
         var elapsed = 0
@@ -117,5 +115,3 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
         destinationCoordinate = nil
     }
 }
-
-

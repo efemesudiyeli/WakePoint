@@ -29,6 +29,7 @@ struct ContentView: View {
 
                     UtilityButtonsView(
                         mapViewModel: mapViewModel,
+                        locationManager: locationManager,
                         isSettingsViewPresented: $isSettingsViewPresented,
                         isSavedDestinationsViewPresented: $isSavedDestinationsViewPresented
                     )
@@ -104,14 +105,14 @@ struct ContentView: View {
                 MapUserLocationButton()
                 MapCompass()
             }
-            
-            .onChange(of: mapViewModel.destination, { _, newValue in
+
+            .onChange(of: mapViewModel.destination) { _, newValue in
                 if newValue == nil {
                     locationManager.stopBackgroundUpdatingLocation()
                 } else {
                     locationManager.startBackgroundUpdatingLocation()
                 }
-            })
+            }
 
             .onTapGesture { screenCoord in
                 if mapViewModel.destination == nil {
