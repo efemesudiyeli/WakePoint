@@ -41,11 +41,19 @@ class MapViewModel {
 
     var isDeveloperMode: Bool = false
 
-    func centerPositionToLocation(position: CLLocationCoordinate2D, offset: OffsetPosition = .center) {
+    func centerPositionToLocation(
+        position: CLLocationCoordinate2D,
+        offset: OffsetPosition = .center,
+        spanLatDelta: CLLocationDegrees = 0.01,
+        spanLongDelta: CLLocationDegrees = 0.01
+    ) {
         withAnimation {
             var region = MKCoordinateRegion(
                 center: position,
-                span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+                span: MKCoordinateSpan(
+                    latitudeDelta: spanLatDelta,
+                    longitudeDelta: spanLongDelta
+                )
             )
 
             guard offset != .center else {
