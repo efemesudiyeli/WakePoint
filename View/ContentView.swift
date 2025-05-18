@@ -15,18 +15,18 @@ struct ContentView: View {
     var body: some View {
         MapReader { reader in
             ZStack(alignment: .center) {
-                VStack {
-                    Spacer()
                     MapView(
                         mapViewModel: mapViewModel,
                         locationManager: locationManager
                     )
-
+                
+                VStack {
+                    Spacer()
                     SearchView(
                         mapViewModel: mapViewModel,
                         isSearchResultsPresented: $isSearchResultsPresented
                     )
-
+                    
                     UtilityButtonsView(
                         mapViewModel: mapViewModel,
                         isSettingsViewPresented: $isSettingsViewPresented,
@@ -34,6 +34,7 @@ struct ContentView: View {
                     )
                 }
                 .frame(width: 380)
+                
                 .sheet(isPresented: $isSavedDestinationsViewPresented) {
                     SavedDestinationsView(
                         mapViewModel: mapViewModel,
@@ -97,6 +98,7 @@ struct ContentView: View {
                         }
                 }
             }
+            
             .mapControls {
                 MapScaleView()
                 MapPitchToggle()
@@ -149,6 +151,7 @@ struct ContentView: View {
                 }
             }
         }
+        
     }
 }
 
