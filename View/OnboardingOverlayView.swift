@@ -11,14 +11,13 @@ struct OnboardingOverlayView: View {
                     .progressViewStyle(.linear)
                     .padding(.horizontal, 40)
                     .tint(.primary)
-                
+
                 Text(stepText)
                     .multilineTextAlignment(.center)
                     .padding()
-                
                     .cornerRadius(10)
                     .foregroundColor(Color.primary)
-                
+
                 Button("Next") {
                     nextStep()
                 }
@@ -29,22 +28,12 @@ struct OnboardingOverlayView: View {
             }
             .padding()
             .background(.ultraThinMaterial)
-           
             .clipShape(RoundedRectangle(cornerRadius: 12))
-                
-          
-            
-            
-            
+
             Spacer()
         }
-        
-        
+
         .padding()
-        
-        
-      
-        
     }
 
     var stepText: LocalizedStringKey {
@@ -65,12 +54,8 @@ struct OnboardingOverlayView: View {
 
 #Preview {
     ZStack {
-       
         Rectangle().fill(Color.gray)
-        
-        OnboardingOverlayView(step: 1) {
-            
-        }
+
+        OnboardingOverlayView(step: 1) {}
     }
-    
 }

@@ -13,7 +13,7 @@ struct WakePointApp: App {
 
     var body: some Scene {
         WindowGroup {
-            MapView(hasLaunchedBefore: $hasLaunchedBefore)
+            ContentView(hasLaunchedBefore: $hasLaunchedBefore)
         }
     }
 }

@@ -167,6 +167,9 @@ struct MarkedLocationSheetView: View {
                 Spacer()
             }
         }
+        .presentationDetents([PresentationDetent.medium])
+        .presentationBackgroundInteraction(.enabled)
+        .presentationDragIndicator(.hidden)
         .padding()
         .onChange(of: $mapViewModel.savedDestinations.count) { _, newValue in
             if !premiumManager.isPremium, newValue >= 3 {
@@ -183,11 +186,11 @@ struct MarkedLocationSheetView: View {
             }
         }
         .onDisappear {
-            
+            if !mapViewModel.isDestinationLocked {
                 mapViewModel.destination = nil
                 locationManager.destinationCoordinate = nil
                 route = nil
-            
+            }
         }
         .alert(
             "Premium Needed",

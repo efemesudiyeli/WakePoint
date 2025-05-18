@@ -11,6 +11,12 @@ import UIKit
 
 @Observable
 class MapViewModel {
+    enum OffsetPosition {
+        case center
+        case topCenter
+        case bottomCenter
+    }
+
     var circleColor: Color = .blue.opacity(0.5)
     var position = MapCameraPosition.region(
         MKCoordinateRegion(
@@ -26,23 +32,63 @@ class MapViewModel {
     var isDestinationLocked: Bool = false
     var savedDestinations: [Destination] = []
     var notificationFeedbackGenerator: UINotificationFeedbackGenerator = .init()
+    var searchQuery = ""
+    var searchResults: [MKMapItem] = []
+    var relatedSearchResults: [MKMapItem] = []
+    var route: MKRoute?
 
     // MARK: Change here when release
 
     var isDeveloperMode: Bool = false
 
-    func centerPositionToLocation(position: CLLocationCoordinate2D) {
+    func centerPositionToLocation(position: CLLocationCoordinate2D, offset: OffsetPosition = .center) {
         withAnimation {
-            self.position = MapCameraPosition.region(
-                MKCoordinateRegion(
-                    center: position,
-                    span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
-                ))
+            var region = MKCoordinateRegion(
+                center: position,
+                span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+            )
+
+            guard offset != .center else {
+                self.position = MapCameraPosition.region(region)
+                return
+            }
+
+            let offsetHeight: CGFloat = switch offset {
+            case .topCenter:
+                UIScreen.main.bounds.height * 0.25
+            case .bottomCenter:
+                -UIScreen.main.bounds.height * 0.25
+            default:
+                0
+            }
+
+            let latitudeOffset = offsetHeight * region.span.latitudeDelta / UIScreen.main.bounds.height
+
+            let adjustedCoordinate = MKCoordinateRegion(
+                center: CLLocationCoordinate2D(
+                    latitude: position.latitude - latitudeOffset,
+                    longitude: position.longitude
+                ),
+                span: region.span
+            ).center
+
+            region.center = adjustedCoordinate
+            self.position = MapCameraPosition.region(region)
         }
     }
 
-    var searchQuery = ""
-    var searchResults: [MKMapItem] = []
+    func updateRelatedSearchResults(query: String) {
+        let request = MKLocalSearch.Request()
+        request.naturalLanguageQuery = query
+
+        let search = MKLocalSearch(request: request)
+        search.start { response, _ in
+            guard let items = response?.mapItems else { return }
+            DispatchQueue.main.async {
+                self.relatedSearchResults = items
+            }
+        }
+    }
 
     func search() {
         let request = MKLocalSearch.Request()
@@ -119,8 +165,8 @@ class MapViewModel {
 
         let directions = MKDirections(request: request)
         directions.calculate {
- response,
- error in
+            response,
+                error in
             if let error {
                 print("Error calculating route: \(error.localizedDescription)")
                 completion(nil, nil, nil)
@@ -133,7 +179,7 @@ class MapViewModel {
                 return
             }
 
-            let distance: LocalizedStringKey = LocalizedStringKey( String(
+            let distance = LocalizedStringKey(String(
                 format: "%.1f km",
                 route.distance / 1000
             ))

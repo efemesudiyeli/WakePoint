@@ -9,7 +9,7 @@ import SwiftUI
 
 struct CustomTextFieldStyle: TextFieldStyle {
     var backgroundColor: Color = .oppositePrimary
-    var cornerRadius: CGFloat = 10
+    var cornerRadius: CGFloat = 8
     @Binding var searchQuery: String
 
     func _body(configuration: TextField<Self._Label>) -> some View {
@@ -28,7 +28,7 @@ struct CustomTextFieldStyle: TextFieldStyle {
         .frame(maxWidth: .infinity)
         .padding()
         .background(backgroundColor)
-        .cornerRadius(cornerRadius)
+        .clipShape(UnevenRoundedRectangle(bottomLeadingRadius: cornerRadius, bottomTrailingRadius: cornerRadius))
         .shadow(radius: 10)
     }
 }

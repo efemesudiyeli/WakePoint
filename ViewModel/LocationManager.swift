@@ -41,6 +41,7 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
             elapsed += 1
             if elapsed >= seconds {
                 timer.invalidate()
+                self.hasVibrated = false
             }
         }
     }
@@ -79,8 +80,8 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
                 hasVibrated = true
                 vibratePhone(seconds: vibrateSeconds.rawValue)
                 let content = UNMutableNotificationContent()
-                content.title = "Hedefe Yaklaştın!"
-                content.body = "Belirlediğin konuma ulaştın veya çok yakınsın."
+                content.title = String(localized: "Time to wake up!")
+                content.body = String(localized: "You have reached or are very close to the position you set.")
                 content.sound = .default
 
                 let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)

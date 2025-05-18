@@ -88,6 +88,9 @@ struct SettingsView: View {
                 }
             }
         }
+        .presentationDetents([PresentationDetent.medium])
+        .presentationBackgroundInteraction(.enabled)
+        .presentationDragIndicator(.visible)
         .listStyle(.insetGrouped)
         .onAppear {
             locationManager.fetchSettings()

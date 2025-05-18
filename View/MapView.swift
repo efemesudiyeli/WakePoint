@@ -1,335 +1,46 @@
-import CoreLocation
+//
+//  MapView.swift
+//  WakePoint
+//
+//  Created by Efe Mesudiyeli on 18.05.2025.
+//
+
 import MapKit
 import SwiftUI
 
 struct MapView: View {
-    @State var locationManager = LocationManager()
-    @State var mapViewModel = MapViewModel()
-    @State var premiumManager = PremiumManager()
-    @State private var isSettingsViewPresented = false
-    @State private var isSearchResultsPresented = false
-    @State var route: MKRoute?
-    @State private var showRouteConfirmation = false
-    @State private var isSavedDestinationsPresented = false
-    @Binding var hasLaunchedBefore: Bool
+    @Bindable var mapViewModel: MapViewModel
+    @Bindable var locationManager: LocationManager
 
     var body: some View {
-        MapReader { reader in
-            ZStack(alignment: .center) {
-                Map(
-                    position: $mapViewModel.position,
-                    interactionModes: .all,
-                    content: {
-                        UserAnnotation()
+        Map(position: $mapViewModel.position, interactionModes: .all) {
+            UserAnnotation()
 
-                        if let currentLocationCoordinate = locationManager.currentLocation?.coordinate {
-                            MapCircle(
-                                center: currentLocationCoordinate,
-                                radius: locationManager.circleDistance.rawValue
-                            ).foregroundStyle(mapViewModel.circleColor)
-                        }
+            if let currentLocationCoordinate = locationManager.currentLocation?.coordinate {
+                MapCircle(
+                    center: currentLocationCoordinate,
+                    radius: locationManager.circleDistance.rawValue
+                ).foregroundStyle(mapViewModel.circleColor)
+            }
 
-                        if let destination = mapViewModel.destination {
-                            Annotation(
-                                mapViewModel.destination?.name ?? "Destination",
-                                coordinate: destination.coordinate
-                            ) {
-                                ZStack(alignment: .topTrailing) {
-                                    Image(systemName: "mappin.circle.fill")
-                                        .resizable()
-                                        .frame(width: 30, height: 30)
-                                        .foregroundColor(.blue)
-                                }
-                            }
-                        }
-
-                        if let route {
-                            MapPolyline(route.polyline)
-                                .stroke(Color.blue, lineWidth: 5)
-                        }
-                    }
-                )
-
-                VStack {
-                    Spacer()
-
-                    TextField(
-                        "Search for a place...",
-                        text: $mapViewModel.searchQuery
-                    )
-                    .textFieldStyle(
-                        CustomTextFieldStyle(searchQuery: $mapViewModel.searchQuery)
-                    )
-                    .padding(.horizontal, 12)
-                    .onSubmit {
-                        guard !mapViewModel.searchQuery.isEmpty else { return }
-                        mapViewModel.search()
-                        isSearchResultsPresented = true
-                    }
-
-                    HStack {
-                        Spacer()
-
-                        Button {
-                            isSettingsViewPresented.toggle()
-                        } label: {
-                            Image(systemName: "gear")
-                        }
-                        .frame(width: 50, height: 50)
-                        .background(
-                            RoundedRectangle(cornerRadius: 8)
-                                .fill(Color.oppositePrimary)
-                        )
-                        .shadow(radius: 30)
-
-                        Button {
-                            mapViewModel.isDestinationLocked.toggle()
-                        } label: {
-                            Image(systemName: mapViewModel.isDestinationLocked ? "lock.fill" : "lock.open.fill")
-                        }
-                        .frame(width: 50, height: 50)
-                        .background(
-                            RoundedRectangle(cornerRadius: 8)
-                                .fill(Color.oppositePrimary)
-                        )
-                        .shadow(radius: 30)
-
-                        Button {
-                            isSavedDestinationsPresented.toggle()
-                        } label: {
-                            Image(systemName: mapViewModel.savedDestinations.count > 0 ? "bookmark.fill" : "bookmark")
-                        }
-                        .frame(width: 50, height: 50)
-                        .background(
-                            RoundedRectangle(cornerRadius: 8)
-                                .fill(Color.oppositePrimary)
-                        )
-                        .shadow(radius: 30)
-                    }
-                    .padding(.bottom, 6)
-                    .padding(.trailing, 14)
-                }
-                .frame(width: 380)
-                .sheet(isPresented: $isSavedDestinationsPresented) {
-                    if !mapViewModel.savedDestinations.isEmpty {
-                        VStack(alignment: .leading) {
-                            Text("Saved Destinations")
-                                .font(.title)
-                                .fontWeight(.black)
-                            Text("Swipe to destination options.")
-                                .font(.footnote)
-                                .foregroundStyle(.gray)
-                        }.padding(.top)
-
-                        List {
-                            ForEach(mapViewModel.savedDestinations, id: \.id) { destination in
-                                Button {
-                                    isSavedDestinationsPresented.toggle()
-                                    mapViewModel.destination = destination
-                                    showRouteConfirmation.toggle()
-                                    mapViewModel.centerPositionToLocation(position: destination.coordinate)
-                                } label: {
-                                    DestinationButtonView(destination: destination)
-                                }
-                                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                                    Button(role: .destructive) {
-                                        mapViewModel.deleteDestination(destination: destination)
-                                    } label: {
-                                        Image(systemName: "trash")
-                                    }
-                                }
-                            }
-
-                            if !premiumManager.isPremium, mapViewModel.savedDestinations.count >= 3 {
-                                Button {} label: {
-                                    Label("Buy Premium", systemImage: "star.circle")
-                                        .foregroundStyle(
-                                            Gradient(
-                                                colors: [
-                                                    Color.indigo,
-                                                    Color.white,
-                                                ]
-                                            )
-                                        )
-                                }.listRowSeparator(.visible, edges: .top)
-                                    .listRowSeparatorTint(.primary)
-                            }
-                        }
-                        .presentationDetents([.medium])
-
-                    } else {
-                        VStack {
-                            Text("😔")
-                                .font(.largeTitle)
-                            Text("There is no saved destinations yet.")
-                        }.presentationDetents([PresentationDetent.medium])
-                    }
-                }
-                .sheet(isPresented: $isSearchResultsPresented) {
-                    if !mapViewModel.searchResults.isEmpty {
-                        List(mapViewModel.searchResults, id: \.self) { item in
-                            Button {
-                                mapViewModel
-                                    .centerPositionToLocation(
-                                        position: item.placemark.coordinate
-                                    )
-                                mapViewModel.destination = Destination(
-                                    name: item.placemark.name,
-                                    address: Address(
-                                        name: item.placemark.name,
-                                        locality: item.placemark.locality,
-                                        country: item.placemark.country,
-                                        city: item.placemark.administrativeArea,
-                                        postalCode: item.placemark.postalCode,
-                                        subLocality: item.placemark.subLocality
-                                    ),
-                                    coordinate: item.placemark.coordinate
-                                )
-                                mapViewModel.searchQuery = ""
-
-                                if let currentLocation = locationManager.currentLocation {
-                                    mapViewModel
-                                        .calculateRoute(
-                                            from: currentLocation.coordinate,
-                                            to: item.placemark.coordinate
-                                        ) { distance, minutes, _ in
-                                            mapViewModel.destinationDistance = distance
-                                            mapViewModel.destinationDistanceMinutes = minutes
-                                        }
-                                }
-
-                                isSearchResultsPresented.toggle()
-                                showRouteConfirmation.toggle()
-                            } label: {
-                                VStack(alignment: .leading) {
-                                    Text(item.name ?? "Unknown")
-                                        .font(.headline)
-                                    Text(item.placemark.title ?? "")
-                                        .font(.subheadline)
-                                }
-                            }
-                        }.presentationDetents([PresentationDetent.medium])
+            if let destination = mapViewModel.destination {
+                Annotation(
+                    mapViewModel.destination?.name ?? "Destination",
+                    coordinate: destination.coordinate
+                ) {
+                    ZStack(alignment: .topTrailing) {
+                        Image(systemName: "mappin.circle.fill")
+                            .resizable()
+                            .frame(width: 30, height: 30)
+                            .foregroundColor(.blue)
                     }
                 }
             }
-            .mapControls {
-                MapScaleView()
-                MapPitchToggle()
-                MapUserLocationButton()
-                MapCompass()
-            }
-            .sheet(isPresented: $showRouteConfirmation) {
-                MarkedLocationSheetView(
-                    locationManager: locationManager,
-                    mapViewModel: mapViewModel,
-                    premiumManager: premiumManager,
-                    locationTitle: mapViewModel.destination?.name ?? "Title not available",
-                    distanceToUser: mapViewModel.destinationDistance ?? "N/A",
-                    minutesToUser: mapViewModel.destinationDistanceMinutes ?? "N/A",
-                    address: mapViewModel.destination?.address,
-                    coordinates: mapViewModel.destination?.coordinate,
-                    route: $route
-                )
-                .presentationDetents([PresentationDetent.medium])
-                .presentationDragIndicator(.hidden)
-            }
-            .sheet(isPresented: $isSettingsViewPresented) {
-                SettingsView(
-                    locationManager: locationManager,
-                    mapViewModel: mapViewModel, premiumManager: premiumManager
-                )
-                .presentationDetents([PresentationDetent.medium])
-                .presentationDragIndicator(.visible)
-            }
-            .sheet(
-                isPresented: $locationManager.isUserReachedDistance,
-                onDismiss: {
-                    mapViewModel.resetDestination()
-                    locationManager.resetDestination()
-                    route = nil
-                },
-                content: {
-                    VStack {
-                        Spacer()
-                        Text("Wake up you reached your destination nearly!")
-                        Spacer()
-                    }
-                    .presentationDetents([PresentationDetent.medium])
-                    .presentationDragIndicator(.visible)
-                }
-            )
-            .fullScreenCover(isPresented: $hasLaunchedBefore.map { !$0 }) {
-                OnboardingView(hasLaunchedBefore: $hasLaunchedBefore)
-                    .onDisappear {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                            withAnimation {
-                                if let userCoordinate = locationManager.currentLocation?.coordinate {
-                                    mapViewModel.position = MapCameraPosition.region(
-                                        MKCoordinateRegion(
-                                            center: userCoordinate,
-                                            span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
-                                        ))
-                                }
-                            }
-                        }
-                    }
-            }
-            .onTapGesture { screenCoord in
-                if let tappedCoord = reader.convert(screenCoord, from: .local) {
-                    if mapViewModel.isDestinationLocked { return }
-                    mapViewModel.destination = Destination(
-                        coordinate: tappedCoord
-                    )
-                    
 
-                    mapViewModel.fetchAddress(for: tappedCoord) { address in
-                        mapViewModel.destination?.address = address
-                        mapViewModel.destination?.name = address?.name
-                    }
-
-                    if let userCoordinate = locationManager.currentLocation?.coordinate {
-                        mapViewModel
-                            .calculateRoute(
-                                from: userCoordinate,
-                                to: tappedCoord
-                            ) { distance, minutes, _ in
-                                mapViewModel.destinationDistance = distance
-                                mapViewModel.destinationDistanceMinutes = minutes
-                            }
-                    }
-                    showRouteConfirmation = true
-                }
-            }
-            .onAppear {
-                locationManager.fetchSettings()
-                mapViewModel.fetchSettings()
-                mapViewModel.loadDestinations()
-                
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                    withAnimation {
-                        if let userCoordinate = locationManager.currentLocation?.coordinate {
-                            mapViewModel.position = MapCameraPosition.region(
-                                MKCoordinateRegion(
-                                    center: userCoordinate,
-                                    span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
-                                ))
-                        }
-                    }
-                }
+            if let route = mapViewModel.route {
+                MapPolyline(route.polyline)
+                    .stroke(Color.blue, lineWidth: 5)
             }
         }
-    }
-}
-
-#Preview {
-    MapView(hasLaunchedBefore: .constant(false))
-}
-
-extension Binding where Value == Bool {
-    func map(_ transform: @escaping (Bool) -> Bool) -> Binding<Bool> {
-        Binding<Bool>(
-            get: { transform(self.wrappedValue) },
-            set: { newValue in self.wrappedValue = !newValue }
-        )
     }
 }

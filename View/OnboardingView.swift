@@ -28,26 +28,23 @@ struct OnboardingView: View {
         longitude: -118.497400
     )
     let fakeDestinationCoordinate = CLLocationCoordinate2D(latitude: 34.012900, longitude: -118.491400)
-    
-    @State var mapCameraPosition: MapCameraPosition = MapCameraPosition.region(MKCoordinateRegion(
+
+    @State var mapCameraPosition: MapCameraPosition = .region(MKCoordinateRegion(
         center: CLLocationCoordinate2D(latitude: 34.013733, longitude: -118.494965),
         span: MKCoordinateSpan(latitudeDelta: 0.012, longitudeDelta: 0.012)
     ))
-    
+
     @State private var onboardingStep: Int = 0
-    
-   
-    
+
     var body: some View {
-        MapReader { reader in
+        MapReader { _ in
             ZStack(alignment: .center) {
                 Map(
                     position: $mapCameraPosition,
                     interactionModes: .all,
                     content: {
-                        
                         // Fake User Location Annotation
-                    
+
                         Annotation(
                             LocalizedStringKey("You"),
                             coordinate: fakeUserCoordinate
@@ -61,17 +58,13 @@ struct OnboardingView: View {
                                     .frame(width: 24, height: 24)
                             }
                         }
-                        
-                        
+
                         MapCircle(
                             center: fakeUserCoordinate,
                             radius: 250
                         )
                         .foregroundStyle(mapViewModel.circleColor)
-                        
-                        
-                        
-                        
+
                         if onboardingStep >= 1 {
                             Annotation(
                                 LocalizedStringKey("Your Destination"),
@@ -85,22 +78,17 @@ struct OnboardingView: View {
                                 }
                             }
                         }
-                        
-                        
+
                         if let fakeRoute {
                             MapPolyline(fakeRoute.polyline)
                                 .stroke(Color.blue, lineWidth: 5)
                         }
-                        
                     }
                 ).allowsHitTesting(false)
-                
-                
-                
-                
+
                 VStack {
                     Spacer()
-                    
+
                     TextField(
                         "Search for a place...",
                         text: $mapViewModel.searchQuery
@@ -109,11 +97,10 @@ struct OnboardingView: View {
                         CustomTextFieldStyle(searchQuery: $mapViewModel.searchQuery)
                     )
                     .padding(.horizontal, 12)
-                    
-                    
+
                     HStack {
                         Spacer()
-                        
+
                         Button {
                             isSettingsViewPresented.toggle()
                         } label: {
@@ -125,7 +112,7 @@ struct OnboardingView: View {
                                 .fill(Color.oppositePrimary)
                         )
                         .shadow(radius: 30)
-                        
+
                         Button {
                             mapViewModel.isDestinationLocked.toggle()
                         } label: {
@@ -137,7 +124,7 @@ struct OnboardingView: View {
                                 .fill(Color.oppositePrimary)
                         )
                         .shadow(radius: 30)
-                        
+
                         Button {
                             isSavedDestinationsPresented.toggle()
                         } label: {
@@ -165,7 +152,7 @@ struct OnboardingView: View {
                                 .font(.footnote)
                                 .foregroundStyle(.gray)
                         }.padding(.top)
-                        
+
                         List {
                             ForEach(mapViewModel.savedDestinations, id: \.id) { destination in
                                 Button {
@@ -184,7 +171,7 @@ struct OnboardingView: View {
                                     }
                                 }
                             }
-                            
+
                             if !premiumManager.isPremium, mapViewModel.savedDestinations.count >= 3 {
                                 Button {} label: {
                                     Label("Buy Premium", systemImage: "star.circle")
@@ -201,7 +188,7 @@ struct OnboardingView: View {
                             }
                         }
                         .presentationDetents([.medium])
-                        
+
                     } else {
                         VStack {
                             Text("😔")
@@ -231,7 +218,7 @@ struct OnboardingView: View {
                                     coordinate: item.placemark.coordinate
                                 )
                                 mapViewModel.searchQuery = ""
-                                
+
                                 if let currentLocation = locationManager.currentLocation {
                                     mapViewModel
                                         .calculateRoute(
@@ -242,7 +229,7 @@ struct OnboardingView: View {
                                             mapViewModel.destinationDistanceMinutes = minutes
                                         }
                                 }
-                                
+
                                 isSearchResultsPresented.toggle()
                                 showRouteConfirmation.toggle()
                             } label: {
@@ -285,16 +272,16 @@ struct OnboardingView: View {
                         ).onTapGesture {
                             showRouteConfirmation = false
                         }
-                      
+
                         .presentationDetents([PresentationDetent.medium])
                         .presentationDragIndicator(.hidden)
                     }
                 }
-                
+
                 if onboardingStep < 4 {
                     OnboardingOverlayView(step: onboardingStep) {
                         onboardingStep += 1
-                        if onboardingStep == 2 {showRouteConfirmation.toggle()}
+                        if onboardingStep == 2 { showRouteConfirmation.toggle() }
                         if onboardingStep == 2 {
                             mapViewModel.calculateRoute(from: fakeUserCoordinate, to: fakeDestinationCoordinate) { distance, minutes, route in
                                 print("Fake Route - Distance: \(distance ?? "N/A"), Time: \(minutes ?? "N/A")")
@@ -305,15 +292,15 @@ struct OnboardingView: View {
                         }
                         if onboardingStep == 3 {
                             locationManager.vibratePhone(seconds: 2)
-                            
+
                             let targetCoordinate = CLLocationCoordinate2D(latitude: 34.014030, longitude: -118.492400)
                             let stepCount = 60
                             let delay = 0.02
-                            
+
                             let latitudeStep = (targetCoordinate.latitude - fakeUserCoordinate.latitude) / Double(stepCount)
                             let longitudeStep = (targetCoordinate.longitude - fakeUserCoordinate.longitude) / Double(stepCount)
-                            
-                            for step in 1...stepCount {
+
+                            for step in 1 ... stepCount {
                                 DispatchQueue.main.asyncAfter(deadline: .now() + delay * Double(step)) {
                                     withAnimation(.easeInOut(duration: delay)) {
                                         fakeUserCoordinate.latitude += latitudeStep
@@ -327,12 +314,10 @@ struct OnboardingView: View {
                             UserDefaults.standard.set(true, forKey: "HasLaunchedBefore")
                             dismiss()
                         }
-                        
+
                     }.frame(maxHeight: .infinity)
                 }
-                  
             }
-           
         }
     }
 }
