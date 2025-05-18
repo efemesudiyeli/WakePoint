@@ -85,11 +85,11 @@ struct MarkedLocationSheetView: View {
                             self.route = route
                         }
                     }
-                    
+
                     if let currentLocation = locationManager.currentLocation {
                         mapViewModel
                             .centerPositionToLocation(
-                                position: currentLocation.coordinate) //TODO: change it with ortalama 
+                                position: currentLocation.coordinate) // TODO: change it with ortalama
                     }
                 } label: {
                     VStack(spacing: 5) {

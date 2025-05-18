@@ -30,6 +30,18 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
         locationManager.pausesLocationUpdatesAutomatically = false
         requestNotificationPermission()
     }
+    
+    func stopBackgroundUpdatingLocation() {
+        locationManager.allowsBackgroundLocationUpdates = false
+        print("Stopping background updating location")
+    }
+    
+    func startBackgroundUpdatingLocation() {
+        locationManager.allowsBackgroundLocationUpdates = true
+        print("Starting background updating location")
+
+    }
+
 
     func vibratePhone(seconds: Int) {
         var elapsed = 0
@@ -106,16 +118,4 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
     }
 }
 
-enum CircleDistance: Double, CaseIterable {
-    case short = 250
-    case medium = 500
-    case long = 750
-    case veryLong = 1000
-    case extreme = 1500
-}
 
-enum VibrateSeconds: Int, CaseIterable {
-    case short = 5
-    case medium = 10
-    case long = 15
-}

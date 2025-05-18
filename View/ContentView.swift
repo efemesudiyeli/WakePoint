@@ -15,18 +15,18 @@ struct ContentView: View {
     var body: some View {
         MapReader { reader in
             ZStack(alignment: .center) {
-                    MapView(
-                        mapViewModel: mapViewModel,
-                        locationManager: locationManager
-                    )
-                
+                MapView(
+                    mapViewModel: mapViewModel,
+                    locationManager: locationManager
+                )
+
                 VStack {
                     Spacer()
                     SearchView(
                         mapViewModel: mapViewModel,
                         isSearchResultsPresented: $isSearchResultsPresented
                     )
-                    
+
                     UtilityButtonsView(
                         mapViewModel: mapViewModel,
                         isSettingsViewPresented: $isSettingsViewPresented,
@@ -34,7 +34,6 @@ struct ContentView: View {
                     )
                 }
                 .frame(width: 380)
-                
                 .sheet(isPresented: $isSavedDestinationsViewPresented) {
                     SavedDestinationsView(
                         mapViewModel: mapViewModel,
@@ -98,13 +97,21 @@ struct ContentView: View {
                         }
                 }
             }
-            
+
             .mapControls {
                 MapScaleView()
                 MapPitchToggle()
                 MapUserLocationButton()
                 MapCompass()
             }
+            
+            .onChange(of: mapViewModel.destination, { _, newValue in
+                if newValue == nil {
+                    locationManager.stopBackgroundUpdatingLocation()
+                } else {
+                    locationManager.startBackgroundUpdatingLocation()
+                }
+            })
 
             .onTapGesture { screenCoord in
                 if mapViewModel.destination == nil {
@@ -151,7 +158,6 @@ struct ContentView: View {
                 }
             }
         }
-        
     }
 }
 
