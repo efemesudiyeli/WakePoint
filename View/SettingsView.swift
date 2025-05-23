@@ -5,11 +5,14 @@
 //  Created by Efe Mesudiyeli on 5.05.2025.
 //
 import SwiftUI
+import RevenueCatUI
 
 struct SettingsView: View {
     @Bindable var locationManager: LocationManager
     @Bindable var mapViewModel: MapViewModel
     @Bindable var premiumManager: PremiumManager
+    @State var isPaywallPresented: Bool = false
+    
 
     var body: some View {
         List {
@@ -55,10 +58,29 @@ struct SettingsView: View {
             } header: {
                 Text("Vibration Time")
             }
+            
+            Section {
+                HStack {
+                    TextField(
+                        "Promotion Code",
+                        text: $mapViewModel.promotionCodeInput
+                    )
+                    Button("Redeem") {
+                        // promotion code redeem action
+                        print(mapViewModel.promotionCodeInput)
+                    }
+                    .buttonStyle(.borderedProminent)
+                }
+            } header: {
+                Text("Promotion Code")
+            }
+
 
             if !premiumManager.isPremium {
                 Section {
-                    Button {} label: {
+                    Button {
+                        isPaywallPresented.toggle()
+                    } label: {
                         Label("Buy Premium", systemImage: "star.circle")
                             .foregroundStyle(
                                 Gradient(
@@ -71,6 +93,7 @@ struct SettingsView: View {
                     }
                 }
             }
+            
 
             if mapViewModel.isDeveloperMode {
                 Section {
@@ -92,9 +115,13 @@ struct SettingsView: View {
         .presentationBackgroundInteraction(.enabled)
         .presentationDragIndicator(.visible)
         .listStyle(.insetGrouped)
+        .fullScreenCover(isPresented: $isPaywallPresented) {
+            PaywallView()
+        }
         .onAppear {
             locationManager.fetchSettings()
         }
+        
     }
 }
 

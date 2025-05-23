@@ -5,6 +5,7 @@
 //  Created by Efe Mesudiyeli on 18.05.2025.
 //
 import SwiftUI
+import RevenueCatUI
 
 struct SavedDestinationsView: View {
     @Bindable var mapViewModel: MapViewModel
@@ -12,6 +13,7 @@ struct SavedDestinationsView: View {
     @Bindable var premiumManager: PremiumManager
     @Binding var isSavedDestinationsViewPresented: Bool
     @Binding var isRouteConfirmationSheetPresented: Bool
+    @State var isPaywallPresented: Bool = false
 
     var body: some View {
         if !mapViewModel.savedDestinations.isEmpty {
@@ -58,7 +60,9 @@ struct SavedDestinationsView: View {
                 }
 
                 if !premiumManager.isPremium, mapViewModel.savedDestinations.count >= 3 {
-                    Button {} label: {
+                    Button {
+                        isPaywallPresented.toggle()
+                    } label: {
                         Label("Buy Premium", systemImage: "star.circle")
                             .foregroundStyle(
                                 Gradient(
@@ -74,6 +78,9 @@ struct SavedDestinationsView: View {
             }
             .presentationDetents([.medium])
             .presentationBackgroundInteraction(.enabled)
+            .fullScreenCover(isPresented: $isPaywallPresented) {
+                PaywallView()
+            }
 
         } else {
             VStack {
@@ -84,5 +91,6 @@ struct SavedDestinationsView: View {
                 .presentationBackgroundInteraction(.enabled)
                 .presentationBackgroundInteraction(.enabled)
         }
+        
     }
 }

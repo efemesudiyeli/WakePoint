@@ -36,6 +36,7 @@ class MapViewModel {
     var searchResults: [MKMapItem] = []
     var relatedSearchResults: [MKMapItem] = []
     var route: MKRoute?
+    var promotionCodeInput: String = ""
 
     // MARK: Change here when release
 
@@ -86,6 +87,7 @@ class MapViewModel {
     }
 
     func updateRelatedSearchResults(query: String) {
+        self.relatedSearchResults = []
         let request = MKLocalSearch.Request()
         request.naturalLanguageQuery = query
 
@@ -99,6 +101,7 @@ class MapViewModel {
     }
 
     func search() {
+        self.searchResults = []
         let request = MKLocalSearch.Request()
         request.naturalLanguageQuery = searchQuery
 
@@ -146,6 +149,7 @@ class MapViewModel {
 
                     ))
             } else {
+                print("Can't find address")
                 completion(nil)
             }
         }

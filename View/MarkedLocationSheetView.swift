@@ -7,6 +7,7 @@
 
 import MapKit
 import SwiftUI
+import RevenueCatUI
 
 struct MarkedLocationSheetView: View {
     @State var isOnboarding = false
@@ -120,7 +121,7 @@ struct MarkedLocationSheetView: View {
                 }.disabled(isOnboarding)
 
                 Button {
-                    guard mapViewModel.canSaveNewDestinations else {
+                    if !mapViewModel.canSaveNewDestinations {
                         showPremiumNeeded = true
                         mapViewModel.notificationFeedbackGenerator
                             .notificationOccurred(.error)
@@ -191,6 +192,13 @@ struct MarkedLocationSheetView: View {
         .presentationBackgroundInteraction(.enabled)
         .presentationDragIndicator(.hidden)
         .padding()
+        .fullScreenCover(isPresented: $showPremiumNeeded) {
+            PaywallView()
+        }
+        
+        
+       
+        
         .onChange(of: $mapViewModel.savedDestinations.count) { _, newValue in
             if !premiumManager.isPremium, newValue >= 3 {
                 mapViewModel.canSaveNewDestinations = false
@@ -212,12 +220,6 @@ struct MarkedLocationSheetView: View {
                 route = nil
             }
         }
-        .alert(
-            "Premium Needed",
-            isPresented: $showPremiumNeeded
-        ) {}
-        message: {
-            Text("You need to premium for do this.")
-        }
+        
     }
 }
