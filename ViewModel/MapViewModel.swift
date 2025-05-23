@@ -217,7 +217,6 @@ class MapViewModel {
         do {
             savedDestinations = try JSONDecoder()
                 .decode([Destination].self, from: data)
-            print(savedDestinations)
         } catch {
             print("Failed to load destinations: \(error.localizedDescription)")
         }

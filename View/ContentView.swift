@@ -1,6 +1,7 @@
 import CoreLocation
 import MapKit
 import SwiftUI
+import GoogleMobileAds
 
 struct ContentView: View {
     @State var locationManager = LocationManager()
@@ -15,10 +16,16 @@ struct ContentView: View {
     var body: some View {
         MapReader { reader in
             ZStack(alignment: .center) {
-                MapView(
-                    mapViewModel: mapViewModel,
-                    locationManager: locationManager
-                )
+                ZStack(alignment: .top) {
+                    MapView(
+                        mapViewModel: mapViewModel,
+                        locationManager: locationManager
+                    )
+                 
+                    BannerViewContainer(currentOrientationAnchoredAdaptiveBanner(width: UIScreen.main.bounds.width))
+                        .frame(height: currentOrientationAnchoredAdaptiveBanner(width: UIScreen.main.bounds.width).size.height)
+                    Spacer()
+                }
 
                 VStack {
                     Spacer()
