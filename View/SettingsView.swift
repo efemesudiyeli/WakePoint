@@ -4,15 +4,17 @@
 //
 //  Created by Efe Mesudiyeli on 5.05.2025.
 //
-import SwiftUI
+import RevenueCat
 import RevenueCatUI
+import StoreKit
+import SwiftUI
 
 struct SettingsView: View {
     @Bindable var locationManager: LocationManager
     @Bindable var mapViewModel: MapViewModel
     @Bindable var premiumManager: PremiumManager
     @State var isPaywallPresented: Bool = false
-    
+    @State var isCodeRedemptionPresented: Bool = false
 
     var body: some View {
         List {
@@ -24,57 +26,31 @@ struct SettingsView: View {
                     }
                 }
                 .pickerStyle(.segmented)
-                .onChange(of: locationManager.circleDistance) { _, newValue in
-                    locationManager.circleDistance = newValue
-                    locationManager.saveSettings()
-                }
 
                 ColorPicker("Color", selection: $mapViewModel.circleColor, supportsOpacity: true)
-                    .onChange(of: mapViewModel.circleColor) {
-                        _,
-                            _ in
-                        UserDefaults.standard
-                            .set(
-                                Color.toHex(mapViewModel.circleColor)(),
-                                forKey: "CircleColor"
-                            )
+
+                Picker("Vibration Time", selection: $locationManager.vibrateSeconds) {
+                    ForEach(VibrateSeconds.allCases.sorted(by: { $0.rawValue < $1.rawValue }), id: \.self) { distance in
+                        Text("\(Int(distance.rawValue)) seconds")
+                            .tag(distance)
                     }
 
-            } header: {
-                Text("Circle Settings")
-            }
-
-            Section { Picker("Vibration Time", selection: $locationManager.vibrateSeconds) {
-                ForEach(VibrateSeconds.allCases.sorted(by: { $0.rawValue < $1.rawValue }), id: \.self) { distance in
-                    Text("\(Int(distance.rawValue)) seconds")
-                        .tag(distance)
-                }
-            }
-            .pickerStyle(.segmented)
-            .onChange(of: locationManager.vibrateSeconds) { _, newValue in
-                locationManager.vibrateSeconds = newValue
-                locationManager.saveSettings()
-            }
-            } header: {
-                Text("Vibration Time")
-            }
-            
-            Section {
-                HStack {
-                    TextField(
-                        "Promotion Code",
-                        text: $mapViewModel.promotionCodeInput
-                    )
-                    Button("Redeem") {
-                        // promotion code redeem action
-                        print(mapViewModel.promotionCodeInput)
+                    .disabled(!premiumManager.isPremium)
+                    .pickerStyle(.segmented)
+                    .onChange(of: locationManager.vibrateSeconds) { _, newValue in
+                        locationManager.vibrateSeconds = newValue
+                        locationManager.saveSettings()
                     }
-                    .buttonStyle(.borderedProminent)
                 }
             } header: {
-                Text("Promotion Code")
-            }
+                Text("Customizations")
+            }.disabled(!premiumManager.isPremium)
 
+            Button {
+                isCodeRedemptionPresented.toggle()
+            } label: {
+                Text("Redeem Promotion Code")
+            }
 
             if !premiumManager.isPremium {
                 Section {
@@ -93,7 +69,6 @@ struct SettingsView: View {
                     }
                 }
             }
-            
 
             if mapViewModel.isDeveloperMode {
                 Section {
@@ -111,17 +86,33 @@ struct SettingsView: View {
                 }
             }
         }
+
         .presentationDetents([PresentationDetent.medium])
         .presentationBackgroundInteraction(.enabled)
         .presentationDragIndicator(.visible)
         .listStyle(.insetGrouped)
+        .offerCodeRedemption(isPresented: $isCodeRedemptionPresented) { result in
+            print(result)
+        }
         .fullScreenCover(isPresented: $isPaywallPresented) {
             PaywallView()
+        }
+        .onChange(of: locationManager.circleDistance) { _, newValue in
+            locationManager.circleDistance = newValue
+            locationManager.saveSettings()
+        }
+        .onChange(of: mapViewModel.circleColor) {
+            _,
+                _ in
+            UserDefaults.standard
+                .set(
+                    Color.toHex(mapViewModel.circleColor)(),
+                    forKey: "CircleColor"
+                )
         }
         .onAppear {
             locationManager.fetchSettings()
         }
-        
     }
 }
 

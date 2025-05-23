@@ -6,8 +6,8 @@
 //
 
 import MapKit
-import SwiftUI
 import RevenueCatUI
+import SwiftUI
 
 struct MarkedLocationSheetView: View {
     @State var isOnboarding = false
@@ -90,17 +90,17 @@ struct MarkedLocationSheetView: View {
                     if let currentLocation = locationManager.currentLocation, let destination = mapViewModel.destination {
                         let startCoordinate = currentLocation.coordinate
                         let endCoordinate = destination.coordinate
-                        
+
                         let latDifference = abs(startCoordinate.latitude - endCoordinate.latitude)
                         let lonDifference = abs(startCoordinate.longitude - endCoordinate.longitude)
-                        
+
                         let centerLatitude = (startCoordinate.latitude + endCoordinate.latitude) / 2
                         let centerLongitude = (startCoordinate.longitude + endCoordinate.longitude) / 2
                         let centerCoordinate = CLLocationCoordinate2D(latitude: centerLatitude, longitude: centerLongitude)
-                        
+
                         let spanLatDelta = max(latDifference * 1.5, 0.01)
                         let spanLongDelta = max(lonDifference * 1.5, 0.01)
-                        
+
                         mapViewModel.centerPositionToLocation(
                             position: centerCoordinate,
                             spanLatDelta: spanLatDelta,
@@ -195,10 +195,7 @@ struct MarkedLocationSheetView: View {
         .fullScreenCover(isPresented: $showPremiumNeeded) {
             PaywallView()
         }
-        
-        
-       
-        
+
         .onChange(of: $mapViewModel.savedDestinations.count) { _, newValue in
             if !premiumManager.isPremium, newValue >= 3 {
                 mapViewModel.canSaveNewDestinations = false
@@ -220,6 +217,5 @@ struct MarkedLocationSheetView: View {
                 route = nil
             }
         }
-        
     }
 }

@@ -4,8 +4,8 @@
 //
 //  Created by Efe Mesudiyeli on 18.05.2025.
 //
-import SwiftUI
 import RevenueCatUI
+import SwiftUI
 
 struct SavedDestinationsView: View {
     @Bindable var mapViewModel: MapViewModel
@@ -91,6 +91,5 @@ struct SavedDestinationsView: View {
                 .presentationBackgroundInteraction(.enabled)
                 .presentationBackgroundInteraction(.enabled)
         }
-        
     }
 }

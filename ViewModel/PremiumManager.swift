@@ -7,18 +7,18 @@
 
 import Foundation
 import RevenueCat
-import SwiftUI
 import RevenueCatUI
+import SwiftUI
 
 @Observable
 class PremiumManager {
     var isPremium: Bool = false
     let apiKey = Bundle.main.infoDictionary?["REVENUECAT_API_KEY"] as? String ?? ""
 
-    init(isPremium: Bool = false) {
+    init(isPremium _: Bool = false) {
         setup()
     }
-    
+
     func setup() {
         Purchases.configure(withAPIKey: apiKey)
         checkPremiumStatus()

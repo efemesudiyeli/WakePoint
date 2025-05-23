@@ -1,20 +1,20 @@
 //
-//  BannerViewContainer.swift
+//  BannerContentView.swift
 //  WakePoint
 //
 //  Created by Efe Mesudiyeli on 23.05.2025.
 //
 
-import SwiftUI
 import GoogleMobileAds
+import SwiftUI
 
 struct BannerViewContainer: UIViewRepresentable {
     let adSize: AdSize
-    
+
     init(_ adSize: AdSize) {
         self.adSize = adSize
     }
-    
+
     func makeUIView(context: Context) -> UIView {
         // Wrap the GADBannerView in a UIView. GADBannerView automatically reloads a new ad when its
         // frame size changes; wrapping in a UIView container insulates the GADBannerView from size
@@ -23,15 +23,15 @@ struct BannerViewContainer: UIViewRepresentable {
         view.addSubview(context.coordinator.bannerView)
         return view
     }
-    
-    func updateUIView(_ uiView: UIView, context: Context) {
+
+    func updateUIView(_: UIView, context: Context) {
         context.coordinator.bannerView.adSize = adSize
     }
-    
+
     func makeCoordinator() -> BannerCoordinator {
-        return BannerCoordinator(self)
+        BannerCoordinator(self)
     }
-    
+
     class BannerCoordinator: NSObject, BannerViewDelegate {
         let adUnitID = Bundle.main.infoDictionary?["BANNER_AD_UNIT_ID"] as? String ?? ""
 
@@ -42,46 +42,46 @@ struct BannerViewContainer: UIViewRepresentable {
             banner.delegate = self
             return banner
         }()
-        
+
         let parent: BannerViewContainer
-        
+
         init(_ parent: BannerViewContainer) {
             self.parent = parent
         }
-        
+
         func bannerViewDidReceiveAd(_ bannerView: BannerView) {
             bannerView.alpha = 0
-              UIView.animate(withDuration: 1, animations: {
+            UIView.animate(withDuration: 1, animations: {
                 bannerView.alpha = 1
-              })
-          print("bannerViewDidReceiveAd")
+            })
+            print("bannerViewDidReceiveAd")
         }
 
-        func bannerView(_ bannerView: BannerView, didFailToReceiveAdWithError error: Error) {
-          print("bannerView:didFailToReceiveAdWithError: \(error.localizedDescription)")
+        func bannerView(_: BannerView, didFailToReceiveAdWithError error: Error) {
+            print("bannerView:didFailToReceiveAdWithError: \(error.localizedDescription)")
         }
 
-        func bannerViewDidRecordImpression(_ bannerView: BannerView) {
-          print("bannerViewDidRecordImpression")
+        func bannerViewDidRecordImpression(_: BannerView) {
+            print("bannerViewDidRecordImpression")
         }
 
-        func bannerViewWillPresentScreen(_ bannerView: BannerView) {
-          print("bannerViewWillPresentScreen")
+        func bannerViewWillPresentScreen(_: BannerView) {
+            print("bannerViewWillPresentScreen")
         }
 
-        func bannerViewWillDismissScreen(_ bannerView: BannerView) {
-          print("bannerViewWillDIsmissScreen")
+        func bannerViewWillDismissScreen(_: BannerView) {
+            print("bannerViewWillDIsmissScreen")
         }
 
-        func bannerViewDidDismissScreen(_ bannerView: BannerView) {
-          print("bannerViewDidDismissScreen")
+        func bannerViewDidDismissScreen(_: BannerView) {
+            print("bannerViewDidDismissScreen")
         }
-        
     }
+
     var body: some View {
         GeometryReader { geometry in
             let adSize = currentOrientationAnchoredAdaptiveBanner(width: geometry.size.width)
-            
+
             VStack {
                 Spacer()
                 BannerViewContainer(adSize)

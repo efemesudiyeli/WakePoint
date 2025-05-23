@@ -87,7 +87,7 @@ class MapViewModel {
     }
 
     func updateRelatedSearchResults(query: String) {
-        self.relatedSearchResults = []
+        relatedSearchResults = []
         let request = MKLocalSearch.Request()
         request.naturalLanguageQuery = query
 
@@ -101,7 +101,7 @@ class MapViewModel {
     }
 
     func search() {
-        self.searchResults = []
+        searchResults = []
         let request = MKLocalSearch.Request()
         request.naturalLanguageQuery = searchQuery
 

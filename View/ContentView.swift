@@ -1,7 +1,7 @@
 import CoreLocation
+import GoogleMobileAds
 import MapKit
 import SwiftUI
-import GoogleMobileAds
 
 struct ContentView: View {
     @State var locationManager = LocationManager()
@@ -16,16 +16,10 @@ struct ContentView: View {
     var body: some View {
         MapReader { reader in
             ZStack(alignment: .center) {
-                ZStack(alignment: .top) {
-                    MapView(
-                        mapViewModel: mapViewModel,
-                        locationManager: locationManager
-                    )
-                 
-                    BannerViewContainer(currentOrientationAnchoredAdaptiveBanner(width: UIScreen.main.bounds.width))
-                        .frame(height: currentOrientationAnchoredAdaptiveBanner(width: UIScreen.main.bounds.width).size.height)
-                    Spacer()
-                }
+                MapView(
+                    mapViewModel: mapViewModel,
+                    locationManager: locationManager
+                )
 
                 VStack {
                     Spacer()
@@ -40,6 +34,13 @@ struct ContentView: View {
                         isSettingsViewPresented: $isSettingsViewPresented,
                         isSavedDestinationsViewPresented: $isSavedDestinationsViewPresented
                     )
+
+                    if !premiumManager.isPremium {
+                        VStack {
+                            BannerViewContainer(currentOrientationAnchoredAdaptiveBanner(width: UIScreen.main.bounds.width))
+                                .frame(height: currentOrientationAnchoredAdaptiveBanner(width: UIScreen.main.bounds.width).size.height)
+                        }.frame(height: 50)
+                    }
                 }
                 .frame(width: 380)
                 .sheet(isPresented: $isSavedDestinationsViewPresented) {
