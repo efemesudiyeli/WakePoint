@@ -95,6 +95,14 @@ struct MapView: View {
                     }
                     isMarkedLocationSheetViewPresented = true
                     isMarkerDeleted = false
+
+                    mapViewModel
+                        .centerPositionToLocation(
+                            position: tappedCoord,
+                            offset: .topCenter,
+                            spanLatDelta: 0.05,
+                            spanLongDelta: 0.05
+                        )
                 }
             }
             .sheet(isPresented: $isMarkedLocationSheetViewPresented) {

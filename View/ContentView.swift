@@ -58,7 +58,7 @@ struct ContentView: View {
                     locationManager: locationManager,
                     isSearchResultsPresented: $isSearchResultsPresented,
                     isMarkedLocationSheetPresented: $isMarkedLocationSheetViewPresented
-                )
+                ).presentationDetents([.medium])
             }
             .sheet(isPresented: $isMarkedLocationSheetViewPresented) {
                 MarkedLocationSheetView(

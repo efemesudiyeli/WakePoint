@@ -97,17 +97,18 @@ class MapViewModel: NSObject, MKLocalSearchCompleterDelegate {
         completer.queryFragment = searchQuery
         completer.region = region
     }
-    
-    func completerDidUpdateResults(_ completer: MKLocalSearchCompleter) {
-            DispatchQueue.main.async {
-                self.autoCompleterResults = completer.results
-            }
-        }
 
-    func search() {
+    func completerDidUpdateResults(_ completer: MKLocalSearchCompleter) {
+        DispatchQueue.main.async {
+            self.autoCompleterResults = completer.results
+        }
+    }
+
+    func search(region: MKCoordinateRegion) {
         searchResults = []
         let request = MKLocalSearch.Request()
         request.naturalLanguageQuery = searchQuery
+        request.region = region
 
         let search = MKLocalSearch(request: request)
         search.start { response, _ in

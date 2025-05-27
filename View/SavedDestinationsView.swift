@@ -42,6 +42,13 @@ struct SavedDestinationsView: View {
                                         )
                                 }
                                 isMarkedLocationSheetViewPresented.toggle()
+                                mapViewModel
+                                    .centerPositionToLocation(
+                                        position: destination.coordinate,
+                                        offset: .topCenter,
+                                        spanLatDelta: 0.05,
+                                        spanLongDelta: 0.05
+                                    )
                             } label: {
                                 DestinationButtonView(destination: destination)
                             }

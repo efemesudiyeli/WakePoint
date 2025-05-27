@@ -230,22 +230,10 @@ struct MarkedLocationSheetView: View {
             guard !hasAppeared else { return } // Temporary Solution
             hasAppeared = true
 
-            print(mapViewModel.destination != nil ? "Destination Ayarlanmış" : "NO DESTINATION -MARKEDLOCATIONSHEETVIEW")
-
             if !premiumManager.isPremium, mapViewModel.savedDestinations.count >= 3 {
                 mapViewModel.canSaveNewDestinations = false
             } else {
                 mapViewModel.canSaveNewDestinations = true
-            }
-
-            if let destination = mapViewModel.destination {
-                mapViewModel
-                    .centerPositionToLocation(
-                        position: destination.coordinate,
-                        offset: .topCenter,
-                        spanLatDelta: 0.05,
-                        spanLongDelta: 0.05
-                    )
             }
         }
     }

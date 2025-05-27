@@ -4,13 +4,13 @@
 //
 //  Created by Efe Mesudiyeli on 18.05.2025.
 //
-import SwiftUI
 import MapKit
+import SwiftUI
+
 struct SearchView: View {
     @Bindable var mapViewModel: MapViewModel
     @Bindable var locationManager: LocationManager
     @Binding var isSearchResultsPresented: Bool
-    
 
     var body: some View {
         VStack(spacing: 0) {
@@ -23,7 +23,17 @@ struct SearchView: View {
                         ) { item in
                             Button {
                                 mapViewModel.searchQuery = item.title
-                                mapViewModel.search()
+                                
+                                if let currentLocation = locationManager.currentLocation {
+                                    mapViewModel.search(region: MKCoordinateRegion(
+                                        center: currentLocation.coordinate,
+                                        span: MKCoordinateSpan(
+                                            latitudeDelta: 0.05,
+                                            longitudeDelta: 0.05
+                                        )
+                                    ))
+                                    isSearchResultsPresented = true
+                                }
                             } label: {
                                 Text(item.title)
                                     .padding(.vertical, 6)
@@ -70,20 +80,26 @@ struct SearchView: View {
                                     region: MKCoordinateRegion(
                                         center: currentLocation.coordinate,
                                         span: MKCoordinateSpan(
-                                            latitudeDelta: 0.01,
-                                            longitudeDelta: 0.01
+                                            latitudeDelta: 0.25,
+                                            longitudeDelta: 0.25
                                         )
                                     )
                                 )
                         }
-                        
-                       
                     }
             }
             .onSubmit {
                 guard !mapViewModel.searchQuery.isEmpty else { return }
-                mapViewModel.search()
-                isSearchResultsPresented.toggle()
+                if let currentLocation = locationManager.currentLocation {
+                    mapViewModel.search(region: MKCoordinateRegion(
+                        center: currentLocation.coordinate,
+                        span: MKCoordinateSpan(
+                            latitudeDelta: 0.05,
+                            longitudeDelta: 0.05
+                        )
+                    ))
+                    isSearchResultsPresented.toggle()
+                }
             }
         }
     }
