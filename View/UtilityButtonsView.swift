@@ -81,6 +81,26 @@ struct UtilityButtonsView: View {
                     .fill(Color.oppositePrimary)
             )
             .shadow(radius: 30)
+            
+            Button {
+                switch currentMapStyleType(from: mapViewModel.mapStyle) {
+                case .standard: mapViewModel.mapStyle = .hybrid
+                case .hybrid: mapViewModel.mapStyle = .imagery
+                case .imagery: mapViewModel.mapStyle = .standard
+                }
+                
+            } label: {
+                switch currentMapStyleType(from: mapViewModel.mapStyle) {
+                case .standard: Image(systemName: "map.fill")
+                case .hybrid: Image(systemName: "globe.americas.fill")
+                case .imagery: Image(systemName: "globe.americas")
+                }            }
+            .frame(width: 50, height: 50)
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(Color.oppositePrimary)
+            )
+            .shadow(radius: 30)
         }
         .padding(.bottom, 6)
         .padding(.horizontal, 14)

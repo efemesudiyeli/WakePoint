@@ -16,14 +16,15 @@ struct MarkedLocationSheetView: View {
     @Environment(\.dismiss) private var dismiss
     @Bindable var premiumManager: PremiumManager
     @State var showPremiumNeeded: Bool = false
-    @State var isSaved: Bool = false
+    @State var isSaving: Bool = false
     @State private var hasAppeared = false
-
+    @State var isSavedAlready: Bool = false
+    
     var distanceToUser: LocalizedStringKey
     var minutesToUser: LocalizedStringKey
     var coordinates: CLLocationCoordinate2D?
     @Binding var route: MKRoute?
-
+    
     var body: some View {
         VStack(alignment: .leading) {
             if mapViewModel.destination?.address == nil {
@@ -33,17 +34,17 @@ struct MarkedLocationSheetView: View {
                     .font(.largeTitle)
                     .fontWeight(.heavy)
                 Text("Marked Location - ") + Text(distanceToUser) + Text(" away")
-
+                
                 Spacer()
-
+                
                 VStack(alignment: .leading) {
                     Text("Details")
                         .font(.largeTitle)
                         .fontWeight(.heavy)
-
+                    
                     Text("Address")
                         .fontWeight(.bold)
-
+                    
                     if let destinationAddress = mapViewModel.destination?.address {
                         Text(
                             [
@@ -54,26 +55,26 @@ struct MarkedLocationSheetView: View {
                                 destinationAddress.country,
                                 destinationAddress.postalCode,
                             ]
-                            .compactMap(\.self)
-                            .joined(separator: ", ")
+                                .compactMap(\.self)
+                                .joined(separator: ", ")
                         )
                         .multilineTextAlignment(.leading)
                         .fixedSize(horizontal: false, vertical: true)
                     }
-
+                    
                     Divider()
-
+                    
                     if let coordinates {
                         Text("Coordinates")
                             .fontWeight(.bold)
                         Text("\(coordinates.latitude), \(coordinates.longitude)")
                     }
                 }
-
+                
                 Spacer()
                 HStack {
                     Spacer()
-
+                    
                     Button {
                         if let currentlocationCoordinate = locationManager.currentLocation?.coordinate, let destinationCoordinate = mapViewModel.destination?.coordinate {
                             mapViewModel
@@ -85,18 +86,18 @@ struct MarkedLocationSheetView: View {
                                 .setVibratePoint(
                                     destinationCoordinate: destinationCoordinate
                                 )
-
+                            
                             dismiss()
                             if let currentLocation = locationManager.currentLocation, let destination = mapViewModel.destination {
                                 let startCoordinate = currentLocation.coordinate
                                 let endCoordinate = destination.coordinate
-
+                                
                                 let middleCoordinateCalculation = mapViewModel
                                     .calculateMiddleCoordinate(
                                         startCoordinate: startCoordinate,
                                         endCoordinate: endCoordinate
                                     )
-
+                                
                                 mapViewModel.centerPositionToLocation(
                                     position: middleCoordinateCalculation.center,
                                     spanLatDelta: middleCoordinateCalculation.spanLat,
@@ -108,7 +109,7 @@ struct MarkedLocationSheetView: View {
                         if mapViewModel.route != nil {
                             VStack(spacing: 5) {
                                 Image(systemName: "play.fill")
-
+                                
                                 Text(mapViewModel.route == nil ? "N/A" : minutesToUser)
                                     .bold()
                             }
@@ -120,7 +121,7 @@ struct MarkedLocationSheetView: View {
                         } else if mapViewModel.routeCantFound {
                             VStack(spacing: 5) {
                                 Image(systemName: "exclamationmark.magnifyingglass")
-
+                                
                                 Text("N/A")
                                     .bold()
                             }
@@ -132,7 +133,7 @@ struct MarkedLocationSheetView: View {
                         } else {
                             VStack(spacing: 5) {
                                 ProgressView()
-
+                                
                                 Text("Loading")
                                     .bold()
                             }
@@ -142,9 +143,9 @@ struct MarkedLocationSheetView: View {
                                 RoundedRectangle(cornerRadius: 12)
                             )
                         }
-
+                        
                     }.disabled(isOnboarding || mapViewModel.route == nil)
-
+                    
                     Button {
                         if !mapViewModel.canSaveNewDestinations {
                             showPremiumNeeded = true
@@ -162,35 +163,36 @@ struct MarkedLocationSheetView: View {
                                 )
                             mapViewModel.notificationFeedbackGenerator
                                 .notificationOccurred(.success)
-
+                            isSavedAlready = true
                             withAnimation {
-                                isSaved = true
-                            }
-
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                                withAnimation {
-                                    isSaved = false
-                                }
+                                isSaving = true
                             }
                         }
                     } label: {
                         VStack(spacing: 5) {
-                            if isSaved {
+                            if isSavedAlready {
                                 Image(systemName: "checkmark.circle.fill")
                                     .foregroundColor(.green)
+                                Text("Saved")
+                                    .bold()
                             } else {
-                                Image(systemName: "bookmark.fill")
+                                if isSaving {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .foregroundColor(.green)
+                                } else {
+                                    Image(systemName: "bookmark.fill")
+                                }
+                                Text(isSaving ? "Saved" : "Save")
+                                    .bold()
                             }
-                            Text(isSaved ? "Saved" : "Save")
-                                .bold()
                         }
                         .frame(width: 100, height: 70)
                         .foregroundStyle(.background)
                         .background(
                             RoundedRectangle(cornerRadius: 12)
                         )
-                    }.disabled(isOnboarding)
-
+                    }.disabled(isOnboarding || isSavedAlready)
+                    
                     Button {
                         dismiss()
                         mapViewModel.destination = nil
@@ -229,7 +231,12 @@ struct MarkedLocationSheetView: View {
         .onAppear {
             guard !hasAppeared else { return } // Temporary Solution
             hasAppeared = true
-
+            
+            isSavedAlready = mapViewModel.savedDestinations
+                .contains(where: { element in
+                    element == mapViewModel.destination
+                })
+            
             if !premiumManager.isPremium, mapViewModel.savedDestinations.count >= 3 {
                 mapViewModel.canSaveNewDestinations = false
             } else {
@@ -249,7 +256,7 @@ struct MarkedLocationSheetView: View {
             mapViewModel: MapViewModel(),
             premiumManager: PremiumManager(),
             showPremiumNeeded: false,
-            isSaved: false,
+            isSaving: false,
             distanceToUser: "123",
             minutesToUser: "123",
             coordinates: CLLocationCoordinate2D(),

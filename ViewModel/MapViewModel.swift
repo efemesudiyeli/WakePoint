@@ -16,7 +16,7 @@ class MapViewModel: NSObject, MKLocalSearchCompleterDelegate {
         case topCenter
         case bottomCenter
     }
-
+    var mapStyle: MapStyle = .standard
     var circleColor: Color = .blue.opacity(0.5)
     var position = MapCameraPosition.region(
         MKCoordinateRegion(

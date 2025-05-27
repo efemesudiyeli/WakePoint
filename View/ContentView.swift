@@ -51,6 +51,7 @@ struct ContentView: View {
                     premiumManager: premiumManager,
                     isMarkedLocationSheetViewPresented: $isMarkedLocationSheetViewPresented
                 )
+                .presentationDragIndicator(.visible)
             }
             .sheet(isPresented: $isSearchResultsPresented) {
                 SearchResultsView(

@@ -69,7 +69,10 @@ struct MapView: View {
                 MapCompass()
                 MapUserLocationButton()
                 MapScaleView()
+                MapPitchToggle()
             }
+            .mapStyle(mapViewModel.mapStyle)
+            
 
             .onTapGesture { screenCord in
                 guard mapViewModel.destination == nil else {

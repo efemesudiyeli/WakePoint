@@ -18,7 +18,7 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
     var destinationCoordinate: CLLocationCoordinate2D?
     private var hasVibrated = false
     var circleDistance: CircleDistance = .long
-    var vibrateSeconds: VibrateSeconds = .long
+    var vibrateSeconds: VibrateSeconds = .medium
     var isUserReachedDistance = false
 
     override init() {

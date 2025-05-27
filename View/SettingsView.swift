@@ -19,32 +19,58 @@ struct SettingsView: View {
     var body: some View {
         List {
             Section {
-                Picker("Circle Distance", selection: $locationManager.circleDistance) {
-                    ForEach(CircleDistance.allCases.sorted(by: { $0.rawValue < $1.rawValue }), id: \.self) { distance in
-                        Text("\(Int(distance.rawValue)) m")
-                            .tag(distance)
+                Group {
+                    Picker("Circle Distance", selection: $locationManager.circleDistance) {
+                        ForEach(CircleDistance.allCases.sorted(by: { $0.rawValue < $1.rawValue }), id: \.self) { distance in
+                            Text("\(Int(distance.rawValue)) m")
+                                .tag(distance)
+                        }
                     }
+                    .pickerStyle(.segmented)
                 }
-                .pickerStyle(.segmented)
+                .allowsHitTesting(premiumManager.isPremium)
+                .opacity(premiumManager.isPremium ? 1.0 : 0.5)
 
-                ColorPicker("Color", selection: $mapViewModel.circleColor, supportsOpacity: true)
-
-                Picker("Vibration Time", selection: $locationManager.vibrateSeconds) {
-                    ForEach(VibrateSeconds.allCases.sorted(by: { $0.rawValue < $1.rawValue }), id: \.self) { distance in
-                        Text("\(Int(distance.rawValue)) seconds")
-                            .tag(distance)
+                Group {
+                    Picker("Vibration Time", selection: $locationManager.vibrateSeconds) {
+                        ForEach(VibrateSeconds.allCases.sorted(by: { $0.rawValue < $1.rawValue }), id: \.self) { distance in
+                            Text("\(Int(distance.rawValue)) seconds")
+                                .tag(distance)
+                        }
                     }
-
-                    .disabled(!premiumManager.isPremium)
                     .pickerStyle(.segmented)
                     .onChange(of: locationManager.vibrateSeconds) { _, newValue in
                         locationManager.vibrateSeconds = newValue
                         locationManager.saveSettings()
                     }
                 }
+                .allowsHitTesting(premiumManager.isPremium)
+                .opacity(premiumManager.isPremium ? 1.0 : 0.5)
+                
+                Group {
+                    ColorPicker("Color", selection: $mapViewModel.circleColor, supportsOpacity: true)
+                }
+                .allowsHitTesting(premiumManager.isPremium)
+                .opacity(premiumManager.isPremium ? 1.0 : 0.5)
+
+              
+
+               
             } header: {
-                Text("Customizations")
-            }.disabled(!premiumManager.isPremium)
+                HStack(spacing: 2) {
+                    Text("Premium")
+                    .foregroundStyle(
+                        Gradient(
+                            colors: [
+                                Color.indigo,
+                                Color.white,
+                            ]
+                        )
+                    )
+                    Text("Customizations")
+                }
+             
+            }
 
             Button {
                 isCodeRedemptionPresented.toggle()
