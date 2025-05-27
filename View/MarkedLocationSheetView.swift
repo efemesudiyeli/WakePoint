@@ -15,187 +15,210 @@ struct MarkedLocationSheetView: View {
     @Bindable var mapViewModel: MapViewModel
     @Environment(\.dismiss) private var dismiss
     @Bindable var premiumManager: PremiumManager
-    @State var showPremiumNeeded: Bool = false // TODO: Will change with paywall.
+    @State var showPremiumNeeded: Bool = false
     @State var isSaved: Bool = false
+    @State private var hasAppeared = false
 
-    var locationTitle: String
     var distanceToUser: LocalizedStringKey
     var minutesToUser: LocalizedStringKey
-    var address: Address?
     var coordinates: CLLocationCoordinate2D?
     @Binding var route: MKRoute?
 
     var body: some View {
         VStack(alignment: .leading) {
-            Text(locationTitle)
-                .font(.largeTitle)
-                .fontWeight(.heavy)
-            Text("Marked Location - ") + Text(distanceToUser) + Text(" away")
-
-            Spacer()
-
-            VStack(alignment: .leading) {
-                Text("Details")
+            if mapViewModel.destination?.address == nil {
+                ProgressView()
+            } else {
+                Text(mapViewModel.destination?.address?.name ?? "Address not found")
                     .font(.largeTitle)
                     .fontWeight(.heavy)
+                Text("Marked Location - ") + Text(distanceToUser) + Text(" away")
 
-                Text("Address")
-                    .fontWeight(.bold)
-                Text(
-                    [
-                        address?.name,
-                        address?.subLocality,
-                        address?.locality,
-                        address?.city,
-                        address?.country,
-                        address?.postalCode,
-                    ]
-                    .compactMap(\.self)
-                    .joined(separator: ", ")
-                )
-                .multilineTextAlignment(.leading)
-                .fixedSize(horizontal: false, vertical: true)
-
-                Divider()
-
-                if let coordinates {
-                    Text("Coordinates")
-                        .fontWeight(.bold)
-                    Text("\(coordinates.latitude), \(coordinates.longitude)")
-                }
-            }
-
-            Spacer()
-            HStack {
                 Spacer()
 
-                Button {
-                    dismiss()
-                    locationManager.destinationCoordinate = mapViewModel.destination?.coordinate
-                    mapViewModel.isDestinationLocked = true
-                    let request = MKDirections.Request()
-                    request.source = MKMapItem(placemark: MKPlacemark(coordinate: locationManager.currentLocation?.coordinate ?? .init()))
-                    request.destination = MKMapItem(
-                        placemark: MKPlacemark(coordinate: mapViewModel.destination?.coordinate ?? .init())
-                    )
-                    request.transportType = .automobile
+                VStack(alignment: .leading) {
+                    Text("Details")
+                        .font(.largeTitle)
+                        .fontWeight(.heavy)
 
-                    let directions = MKDirections(request: request)
-                    directions.calculate { response, _ in
-                        if let route = response?.routes.first {
-                            self.route = route
-                        }
-                    }
+                    Text("Address")
+                        .fontWeight(.bold)
 
-                    if let currentLocation = locationManager.currentLocation, let destination = mapViewModel.destination {
-                        let startCoordinate = currentLocation.coordinate
-                        let endCoordinate = destination.coordinate
-
-                        let latDifference = abs(startCoordinate.latitude - endCoordinate.latitude)
-                        let lonDifference = abs(startCoordinate.longitude - endCoordinate.longitude)
-
-                        let centerLatitude = (startCoordinate.latitude + endCoordinate.latitude) / 2
-                        let centerLongitude = (startCoordinate.longitude + endCoordinate.longitude) / 2
-                        let centerCoordinate = CLLocationCoordinate2D(latitude: centerLatitude, longitude: centerLongitude)
-
-                        let spanLatDelta = max(latDifference * 1.5, 0.01)
-                        let spanLongDelta = max(lonDifference * 1.5, 0.01)
-
-                        mapViewModel.centerPositionToLocation(
-                            position: centerCoordinate,
-                            spanLatDelta: spanLatDelta,
-                            spanLongDelta: spanLongDelta
+                    if let destinationAddress = mapViewModel.destination?.address {
+                        Text(
+                            [
+                                destinationAddress.name,
+                                destinationAddress.subLocality,
+                                destinationAddress.locality,
+                                destinationAddress.city,
+                                destinationAddress.country,
+                                destinationAddress.postalCode,
+                            ]
+                            .compactMap(\.self)
+                            .joined(separator: ", ")
                         )
+                        .multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
                     }
-                } label: {
-                    VStack(spacing: 5) {
-                        Image(systemName: "play.fill")
-                        Text(minutesToUser)
-                            .bold()
-                    }
-                    .frame(width: 100, height: 70)
-                    .foregroundStyle(.background)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                    )
-                }.disabled(isOnboarding)
 
-                Button {
-                    if !mapViewModel.canSaveNewDestinations {
-                        showPremiumNeeded = true
-                        mapViewModel.notificationFeedbackGenerator
-                            .notificationOccurred(.error)
-                        return
-                    }
+                    Divider()
+
                     if let coordinates {
-                        mapViewModel
-                            .saveDestinations(
-                                destination: Destination(
-                                    name: locationTitle,
-                                    address: address,
-                                    coordinate: coordinates
+                        Text("Coordinates")
+                            .fontWeight(.bold)
+                        Text("\(coordinates.latitude), \(coordinates.longitude)")
+                    }
+                }
+
+                Spacer()
+                HStack {
+                    Spacer()
+
+                    Button {
+                        if let currentlocationCoordinate = locationManager.currentLocation?.coordinate, let destinationCoordinate = mapViewModel.destination?.coordinate {
+                            mapViewModel
+                                .startNavigation(
+                                    from: currentlocationCoordinate,
+                                    to: destinationCoordinate
                                 )
-                            )
-                        mapViewModel.notificationFeedbackGenerator
-                            .notificationOccurred(.success)
+                            locationManager
+                                .setVibratePoint(
+                                    destinationCoordinate: destinationCoordinate
+                                )
 
-                        withAnimation {
-                            isSaved = true
-                        }
+                            dismiss()
+                            if let currentLocation = locationManager.currentLocation, let destination = mapViewModel.destination {
+                                let startCoordinate = currentLocation.coordinate
+                                let endCoordinate = destination.coordinate
 
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                            withAnimation {
-                                isSaved = false
+                                let middleCoordinateCalculation = mapViewModel
+                                    .calculateMiddleCoordinate(
+                                        startCoordinate: startCoordinate,
+                                        endCoordinate: endCoordinate
+                                    )
+
+                                mapViewModel.centerPositionToLocation(
+                                    position: middleCoordinateCalculation.center,
+                                    spanLatDelta: middleCoordinateCalculation.spanLat,
+                                    spanLongDelta: middleCoordinateCalculation.spanLong
+                                )
                             }
                         }
-                    }
-                } label: {
-                    VStack(spacing: 5) {
-                        if isSaved {
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundColor(.green)
-                        } else {
-                            Image(systemName: "bookmark.fill")
-                        }
-                        Text(isSaved ? "Saved" : "Save")
-                            .bold()
-                    }
-                    .frame(width: 100, height: 70)
-                    .foregroundStyle(.background)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                    )
-                }.disabled(isOnboarding)
+                    } label: {
+                        if mapViewModel.route != nil {
+                            VStack(spacing: 5) {
+                                Image(systemName: "play.fill")
 
-                Button {
-                    dismiss()
-                    mapViewModel.destination = nil
-                    locationManager.destinationCoordinate = nil
-                    route = nil
-                } label: {
-                    VStack(spacing: 5) {
-                        Image(systemName: "x.square.fill")
-                        Text("Cancel")
-                            .bold()
-                    }
-                    .frame(width: 100, height: 70)
-                    .foregroundStyle(.background)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(Color.red)
-                    )
-                }.disabled(isOnboarding)
-                Spacer()
+                                Text(mapViewModel.route == nil ? "N/A" : minutesToUser)
+                                    .bold()
+                            }
+                            .frame(width: 100, height: 70)
+                            .foregroundStyle(.background)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                            )
+                        } else if mapViewModel.routeCantFound {
+                            VStack(spacing: 5) {
+                                Image(systemName: "exclamationmark.magnifyingglass")
+
+                                Text("N/A")
+                                    .bold()
+                            }
+                            .frame(width: 100, height: 70)
+                            .foregroundStyle(.background)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                            )
+                        } else {
+                            VStack(spacing: 5) {
+                                ProgressView()
+
+                                Text("Loading")
+                                    .bold()
+                            }
+                            .frame(width: 100, height: 70)
+                            .foregroundStyle(.background)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                            )
+                        }
+
+                    }.disabled(isOnboarding || mapViewModel.route == nil)
+
+                    Button {
+                        if !mapViewModel.canSaveNewDestinations {
+                            showPremiumNeeded = true
+                            mapViewModel.notificationFeedbackGenerator
+                                .notificationOccurred(.error)
+                            return
+                        }
+                        if let coordinates {
+                            mapViewModel
+                                .saveDestinations(
+                                    destination: Destination(
+                                        address: mapViewModel.destination?.address,
+                                        coordinate: coordinates
+                                    )
+                                )
+                            mapViewModel.notificationFeedbackGenerator
+                                .notificationOccurred(.success)
+
+                            withAnimation {
+                                isSaved = true
+                            }
+
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                                withAnimation {
+                                    isSaved = false
+                                }
+                            }
+                        }
+                    } label: {
+                        VStack(spacing: 5) {
+                            if isSaved {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundColor(.green)
+                            } else {
+                                Image(systemName: "bookmark.fill")
+                            }
+                            Text(isSaved ? "Saved" : "Save")
+                                .bold()
+                        }
+                        .frame(width: 100, height: 70)
+                        .foregroundStyle(.background)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                        )
+                    }.disabled(isOnboarding)
+
+                    Button {
+                        dismiss()
+                        mapViewModel.destination = nil
+                        locationManager.destinationCoordinate = nil
+                        route = nil
+                        mapViewModel.isDestinationLocked = false
+                    } label: {
+                        VStack(spacing: 5) {
+                            Image(systemName: "x.square.fill")
+                            Text("Remove")
+                                .bold()
+                        }
+                        .frame(width: 100, height: 70)
+                        .foregroundStyle(.background)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color.red)
+                        )
+                    }.disabled(isOnboarding)
+                    Spacer()
+                }
             }
         }
-        .presentationDetents([PresentationDetent.medium])
-        .presentationBackgroundInteraction(.enabled)
-        .presentationDragIndicator(.hidden)
         .padding()
+        .interactiveDismissDisabled()
         .fullScreenCover(isPresented: $showPremiumNeeded) {
             PaywallView()
         }
-
         .onChange(of: $mapViewModel.savedDestinations.count) { _, newValue in
             if !premiumManager.isPremium, newValue >= 3 {
                 mapViewModel.canSaveNewDestinations = false
@@ -204,18 +227,45 @@ struct MarkedLocationSheetView: View {
             }
         }
         .onAppear {
+            guard !hasAppeared else { return } // Temporary Solution
+            hasAppeared = true
+
+            print(mapViewModel.destination != nil ? "Destination Ayarlanmış" : "NO DESTINATION -MARKEDLOCATIONSHEETVIEW")
+
             if !premiumManager.isPremium, mapViewModel.savedDestinations.count >= 3 {
                 mapViewModel.canSaveNewDestinations = false
             } else {
                 mapViewModel.canSaveNewDestinations = true
             }
-        }
-        .onDisappear {
-            if !mapViewModel.isDestinationLocked {
-                mapViewModel.destination = nil
-                locationManager.destinationCoordinate = nil
-                route = nil
+
+            if let destination = mapViewModel.destination {
+                mapViewModel
+                    .centerPositionToLocation(
+                        position: destination.coordinate,
+                        offset: .topCenter,
+                        spanLatDelta: 0.05,
+                        spanLongDelta: 0.05
+                    )
             }
         }
+    }
+}
+
+#Preview {
+    VStack {
+        Text("Test")
+    }.sheet(isPresented: .constant(true)) {
+        MarkedLocationSheetView(
+            isOnboarding: false,
+            locationManager: LocationManager(),
+            mapViewModel: MapViewModel(),
+            premiumManager: PremiumManager(),
+            showPremiumNeeded: false,
+            isSaved: false,
+            distanceToUser: "123",
+            minutesToUser: "123",
+            coordinates: CLLocationCoordinate2D(),
+            route: .constant(MKRoute())
+        ).presentationDetents([.medium])
     }
 }

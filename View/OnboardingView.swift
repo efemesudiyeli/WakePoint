@@ -206,7 +206,6 @@ struct OnboardingView: View {
                                         position: item.placemark.coordinate
                                     )
                                 mapViewModel.destination = Destination(
-                                    name: item.placemark.name,
                                     address: Address(
                                         name: item.placemark.name,
                                         locality: item.placemark.locality,
@@ -224,10 +223,7 @@ struct OnboardingView: View {
                                         .calculateRoute(
                                             from: currentLocation.coordinate,
                                             to: item.placemark.coordinate
-                                        ) { distance, minutes, _ in
-                                            mapViewModel.destinationDistance = distance
-                                            mapViewModel.destinationDistanceMinutes = minutes
-                                        }
+                                        )
                                 }
 
                                 isSearchResultsPresented.toggle()
@@ -256,17 +252,16 @@ struct OnboardingView: View {
                             locationManager: locationManager,
                             mapViewModel: mapViewModel,
                             premiumManager: premiumManager,
-                            locationTitle: "Santa Monica Freeway",
                             distanceToUser: distance ?? "N/A",
                             minutesToUser: minutes ?? "N/A",
-                            address: Address(
-                                name: "Santa Monica Freeway",
-                                locality: "Santa Monica",
-                                country: "United States",
-                                city: "Los Angeles",
-                                postalCode: "90401",
-                                subLocality: "CA"
-                            ),
+//                            address: Address(
+//                                name: "Santa Monica Freeway",
+//                                locality: "Santa Monica",
+//                                country: "United States",
+//                                city: "Los Angeles",
+//                                postalCode: "90401",
+//                                subLocality: "CA"
+//                            ),
                             coordinates: fakeDestinationCoordinate,
                             route: $route
                         ).onTapGesture {
@@ -283,12 +278,8 @@ struct OnboardingView: View {
                         onboardingStep += 1
                         if onboardingStep == 2 { showRouteConfirmation.toggle() }
                         if onboardingStep == 2 {
-                            mapViewModel.calculateRoute(from: fakeUserCoordinate, to: fakeDestinationCoordinate) { distance, minutes, route in
-                                print("Fake Route - Distance: \(distance ?? "N/A"), Time: \(minutes ?? "N/A")")
-                                fakeRoute = route
-                                self.distance = distance
-                                self.minutes = minutes
-                            }
+                            mapViewModel.calculateRoute(from: fakeUserCoordinate, to: fakeDestinationCoordinate)
+                            fakeRoute = mapViewModel.route
                         }
                         if onboardingStep == 3 {
                             locationManager.vibratePhone(seconds: 2)

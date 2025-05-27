@@ -12,7 +12,6 @@ struct Destination: Identifiable, Codable, Equatable {
     }
 
     var id = UUID().uuidString
-    var name: String? = nil
     var address: Address? = nil
     var coordinate: CLLocationCoordinate2D
 }

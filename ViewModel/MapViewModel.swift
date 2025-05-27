@@ -26,7 +26,6 @@ class MapViewModel {
 
     var canSaveNewDestinations: Bool = true
     var destination: Destination?
-    var destinationAddress: Address?
     var destinationDistanceMinutes: LocalizedStringKey?
     var destinationDistance: LocalizedStringKey?
     var isDestinationLocked: Bool = false
@@ -36,7 +35,9 @@ class MapViewModel {
     var searchResults: [MKMapItem] = []
     var relatedSearchResults: [MKMapItem] = []
     var route: MKRoute?
-    var promotionCodeInput: String = ""
+    var isNavigationStarted: Bool = false
+    var routeTransportType: MKDirectionsTransportType = .automobile
+    var routeCantFound: Bool = false
 
     // MARK: Change here when release
 
@@ -114,11 +115,6 @@ class MapViewModel {
         }
     }
 
-    func resetDestination() {
-        destination = nil
-        isDestinationLocked = false
-    }
-
     func fetchSettings() {
         if let colorString: String = UserDefaults.standard.value(forKey: "CircleColor") as? String {
             if let color = Color(hex: colorString) {
@@ -138,16 +134,17 @@ class MapViewModel {
             placemarks,
                 _ in
             if let placemark = placemarks?.first {
+                let address = Address(
+                    name: placemark.name,
+                    locality: placemark.locality,
+                    country: placemark.country,
+                    city: placemark.administrativeArea,
+                    postalCode: placemark.postalCode,
+                    subLocality: placemark.subLocality
+                )
                 completion(
-                    Address(
-                        name: placemark.name,
-                        locality: placemark.locality,
-                        country: placemark.country,
-                        city: placemark.administrativeArea,
-                        postalCode: placemark.postalCode,
-                        subLocality: placemark.subLocality
-
-                    ))
+                    address)
+                self.destination?.address = address
             } else {
                 print("Can't find address")
                 completion(nil)
@@ -155,25 +152,53 @@ class MapViewModel {
         }
     }
 
+    func startNavigation(
+        from _: CLLocationCoordinate2D,
+        to _: CLLocationCoordinate2D
+    ) {
+        isNavigationStarted = true
+        isDestinationLocked = true
+//        calculateRoute(from: from, to: to)
+
+        print("Starting Navigation \(route?.debugDescription ?? "")")
+    }
+
+    func stopNavigation() {
+        isNavigationStarted = false
+        isDestinationLocked = false
+        destination = nil
+        route = nil
+    }
+
+    func calculateMiddleCoordinate(startCoordinate: CLLocationCoordinate2D, endCoordinate: CLLocationCoordinate2D) -> (
+        center: CLLocationCoordinate2D, spanLat: Double, spanLong: Double
+    ) {
+        let latDifference = abs(startCoordinate.latitude - endCoordinate.latitude)
+        let lonDifference = abs(startCoordinate.longitude - endCoordinate.longitude)
+
+        let centerLatitude = (startCoordinate.latitude + endCoordinate.latitude) / 2
+        let centerLongitude = (startCoordinate.longitude + endCoordinate.longitude) / 2
+        let centerCoordinate = CLLocationCoordinate2D(latitude: centerLatitude, longitude: centerLongitude)
+
+        let spanLatDelta = max(latDifference * 1.5, 0.01)
+        let spanLongDelta = max(lonDifference * 1.5, 0.01)
+
+        return (centerCoordinate, spanLatDelta, spanLongDelta)
+    }
+
     func calculateRoute(
         from start: CLLocationCoordinate2D,
-        to end: CLLocationCoordinate2D,
-        completion: @escaping (
-            LocalizedStringKey?,
-            LocalizedStringKey?,
-            MKRoute?
-        ) -> Void
+        to end: CLLocationCoordinate2D
     ) {
-        print("Start Coordinate: \(start)")
-        print("End Coordinate: \(end)")
-
+        routeCantFound = false
+        route = nil
         let startPlacemark = MKPlacemark(coordinate: start)
         let endPlacemark = MKPlacemark(coordinate: end)
 
         let request = MKDirections.Request()
         request.source = MKMapItem(placemark: startPlacemark)
         request.destination = MKMapItem(placemark: endPlacemark)
-        request.transportType = .automobile
+        request.transportType = routeTransportType
 
         let directions = MKDirections(request: request)
         directions.calculate {
@@ -181,23 +206,37 @@ class MapViewModel {
                 error in
             if let error {
                 print("Error calculating route: \(error.localizedDescription)")
-                completion(nil, nil, nil)
+                self.routeCantFound = true
                 return
             }
 
-            guard let route = response?.routes.first else {
+            if let route = response?.routes.first {
+                self.route = route
+                let distance = LocalizedStringKey(String(
+                    format: "%.1f km",
+                    route.distance / 1000
+                ))
+                let travelTime = route.expectedTravelTime
+                let minutesInt = Int(travelTime / 60)
+                let hours = minutesInt / 60
+                let days = hours / 24
+                let remainingHours = hours % 24
+                let remainingMinutes = minutesInt % 60
+
+                let minutes: LocalizedStringKey = if days > 0 {
+                    "\(days)d \(remainingHours)h"
+                } else if hours > 0 {
+                    "\(hours)h \(remainingMinutes)m"
+                } else {
+                    "\(minutesInt)m"
+                }
+                self.destinationDistanceMinutes = minutes
+                self.destinationDistance = distance
+                print("Route calculated")
+            } else {
                 print("No route found")
-                completion(nil, nil, nil)
-                return
+                self.routeCantFound = true
             }
-
-            let distance = LocalizedStringKey(String(
-                format: "%.1f km",
-                route.distance / 1000
-            ))
-            let minutes: LocalizedStringKey = "\(Int(route.expectedTravelTime / 60)) min"
-            print("Distance: \(distance), Minutes: \(minutes)")
-            completion(distance, minutes, route)
         }
     }
 
@@ -231,19 +270,6 @@ class MapViewModel {
                 UserDefaults.standard.set(data, forKey: "SavedDestinations")
             } catch {
                 print("Failed to save destinations after deletion: \(error.localizedDescription)")
-            }
-        }
-    }
-
-    func renameDestination(destination: Destination, name: String) {
-        if let index = savedDestinations.firstIndex(where: { $0.id == destination.id }) {
-            savedDestinations[index].name = name
-
-            do {
-                let data = try JSONEncoder().encode(savedDestinations)
-                UserDefaults.standard.set(data, forKey: "SavedDestinations")
-            } catch {
-                print("Failed to save destinations after renaming: \(error.localizedDescription)")
             }
         }
     }

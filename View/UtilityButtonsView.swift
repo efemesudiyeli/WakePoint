@@ -15,7 +15,7 @@ struct UtilityButtonsView: View {
 
     var body: some View {
         HStack {
-            if mapViewModel.isDestinationLocked {
+            if mapViewModel.isNavigationStarted {
                 Button {
                     isEndRouteConfirmationPresented.toggle()
                 } label: {
@@ -34,22 +34,34 @@ struct UtilityButtonsView: View {
 
             Spacer()
 
+            if !mapViewModel.isNavigationStarted {
+                Button {
+                    switch mapViewModel.routeTransportType {
+                    case .automobile:
+                        mapViewModel.routeTransportType = .walking
+                    default:
+                        mapViewModel.routeTransportType = .automobile
+                    }
+                } label: {
+                    switch mapViewModel.routeTransportType {
+                    case .automobile:
+                        Image(systemName: "car.fill")
+                    default:
+                        Image(systemName: "figure.walk")
+                    }
+                }
+                .frame(width: 50, height: 50)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color.oppositePrimary)
+                )
+                .shadow(radius: 30)
+            }
+
             Button {
                 isSettingsViewPresented.toggle()
             } label: {
                 Image(systemName: "gear")
-            }
-            .frame(width: 50, height: 50)
-            .background(
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(Color.oppositePrimary)
-            )
-            .shadow(radius: 30)
-
-            Button {
-                mapViewModel.isDestinationLocked.toggle()
-            } label: {
-                Image(systemName: mapViewModel.isDestinationLocked ? "lock.fill" : "lock.open.fill")
             }
             .frame(width: 50, height: 50)
             .background(
@@ -77,9 +89,8 @@ struct UtilityButtonsView: View {
             isPresented: $isEndRouteConfirmationPresented
         ) {
             Button {
-                mapViewModel.resetDestination()
+                mapViewModel.stopNavigation()
                 locationManager.resetDestination()
-                mapViewModel.route = nil
             } label: {
                 Text("Confirm")
             }

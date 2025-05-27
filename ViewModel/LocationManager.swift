@@ -44,9 +44,7 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
     func vibratePhone(seconds: Int) {
         var elapsed = 0
         Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { timer in
-            let impactGenerator = UIImpactFeedbackGenerator(style: .heavy)
-            impactGenerator.impactOccurred()
-            AudioServicesPlaySystemSound(kSystemSoundID_Vibrate)
+            AudioServicesPlayAlertSound(kSystemSoundID_Vibrate)
 
             elapsed += 1
             if elapsed >= seconds {
@@ -54,6 +52,10 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
                 self.hasVibrated = false
             }
         }
+    }
+
+    func setVibratePoint(destinationCoordinate: CLLocationCoordinate2D) {
+        self.destinationCoordinate = destinationCoordinate
     }
 
     func saveSettings() {
@@ -77,6 +79,16 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
         }
     }
 
+    fileprivate func sendWakeUpNotification() {
+        let content = UNMutableNotificationContent()
+        content.title = String(localized: "Time to wake up!")
+        content.body = String(localized: "You have reached or are very close to the position you set.")
+        content.sound = .defaultCritical
+
+        let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
+        UNUserNotificationCenter.current().add(request)
+    }
+
     func locationManager(_: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let location = locations.last else { return }
         currentLocation = location
@@ -89,13 +101,7 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
             if isUserReachedDistance, !hasVibrated {
                 hasVibrated = true
                 vibratePhone(seconds: vibrateSeconds.rawValue)
-                let content = UNMutableNotificationContent()
-                content.title = String(localized: "Time to wake up!")
-                content.body = String(localized: "You have reached or are very close to the position you set.")
-                content.sound = .default
-
-                let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
-                UNUserNotificationCenter.current().add(request)
+                sendWakeUpNotification()
             }
         }
     }

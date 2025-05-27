@@ -88,7 +88,7 @@ struct SettingsView: View {
         }
 
         .presentationDetents([PresentationDetent.medium])
-        .presentationBackgroundInteraction(.enabled)
+        .presentationBackgroundInteraction(.disabled)
         .presentationDragIndicator(.visible)
         .listStyle(.insetGrouped)
         .offerCodeRedemption(isPresented: $isCodeRedemptionPresented) { result in

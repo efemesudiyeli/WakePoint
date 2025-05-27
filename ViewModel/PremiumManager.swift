@@ -12,7 +12,7 @@ import SwiftUI
 
 @Observable
 class PremiumManager {
-    var isPremium: Bool = false
+    var isPremium: Bool = true
     let apiKey = Bundle.main.infoDictionary?["REVENUECAT_API_KEY"] as? String ?? ""
 
     init(isPremium _: Bool = false) {

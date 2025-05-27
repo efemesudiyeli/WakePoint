@@ -12,7 +12,7 @@ struct DestinationButtonView: View {
     var destination: Destination
     var body: some View {
         HStack {
-            if let name = destination.name {
+            if let name = destination.address?.name {
                 Text("\(name)")
             }
 
