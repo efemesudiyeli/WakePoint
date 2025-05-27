@@ -25,6 +25,7 @@ struct ContentView: View {
                 Spacer()
                 SearchView(
                     mapViewModel: mapViewModel,
+                    locationManager: locationManager,
                     isSearchResultsPresented: $isSearchResultsPresented
                 )
 

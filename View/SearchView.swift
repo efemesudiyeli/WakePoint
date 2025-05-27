@@ -5,21 +5,27 @@
 //  Created by Efe Mesudiyeli on 18.05.2025.
 //
 import SwiftUI
-
+import MapKit
 struct SearchView: View {
     @Bindable var mapViewModel: MapViewModel
+    @Bindable var locationManager: LocationManager
     @Binding var isSearchResultsPresented: Bool
+    
 
     var body: some View {
         VStack(spacing: 0) {
-            if !mapViewModel.relatedSearchResults.isEmpty, !mapViewModel.searchQuery.isEmpty {
+            if !mapViewModel.autoCompleterResults.isEmpty, !mapViewModel.searchQuery.isEmpty {
                 ScrollView(.horizontal) {
                     HStack(alignment: .center, spacing: 6) {
-                        ForEach(mapViewModel.relatedSearchResults, id: \.self) { item in
+                        ForEach(
+                            mapViewModel.autoCompleterResults,
+                            id: \.self
+                        ) { item in
                             Button {
-                                mapViewModel.searchQuery = item.placemark.name ?? ""
+                                mapViewModel.searchQuery = item.title
+                                mapViewModel.search()
                             } label: {
-                                Text(item.placemark.name ?? "location")
+                                Text(item.title)
                                     .padding(.vertical, 6)
                                     .padding(.horizontal, 12)
                                     .background(.blue)
@@ -58,10 +64,20 @@ struct SearchView: View {
                     _ in
                 DispatchQueue.main
                     .asyncAfter(deadline: .now() + 0.3) {
-                        mapViewModel
-                            .updateRelatedSearchResults(
-                                query: $mapViewModel
-                                    .searchQuery.wrappedValue)
+                        if let currentLocation = locationManager.currentLocation {
+                            mapViewModel
+                                .updateRelatedSearchResults(
+                                    region: MKCoordinateRegion(
+                                        center: currentLocation.coordinate,
+                                        span: MKCoordinateSpan(
+                                            latitudeDelta: 0.01,
+                                            longitudeDelta: 0.01
+                                        )
+                                    )
+                                )
+                        }
+                        
+                       
                     }
             }
             .onSubmit {

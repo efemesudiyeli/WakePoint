@@ -10,7 +10,7 @@ import SwiftUI
 import UIKit
 
 @Observable
-class MapViewModel {
+class MapViewModel: NSObject, MKLocalSearchCompleterDelegate {
     enum OffsetPosition {
         case center
         case topCenter
@@ -38,6 +38,11 @@ class MapViewModel {
     var isNavigationStarted: Bool = false
     var routeTransportType: MKDirectionsTransportType = .automobile
     var routeCantFound: Bool = false
+    var autoCompleterResults: [MKLocalSearchCompletion] = []
+    private var completer: MKLocalSearchCompleter = {
+        let completer = MKLocalSearchCompleter()
+        return completer
+    }()
 
     // MARK: Change here when release
 
@@ -87,19 +92,17 @@ class MapViewModel {
         }
     }
 
-    func updateRelatedSearchResults(query: String) {
-        relatedSearchResults = []
-        let request = MKLocalSearch.Request()
-        request.naturalLanguageQuery = query
-
-        let search = MKLocalSearch(request: request)
-        search.start { response, _ in
-            guard let items = response?.mapItems else { return }
+    func updateRelatedSearchResults(region: MKCoordinateRegion) {
+        completer.delegate = self
+        completer.queryFragment = searchQuery
+        completer.region = region
+    }
+    
+    func completerDidUpdateResults(_ completer: MKLocalSearchCompleter) {
             DispatchQueue.main.async {
-                self.relatedSearchResults = items
+                self.autoCompleterResults = completer.results
             }
         }
-    }
 
     func search() {
         searchResults = []
