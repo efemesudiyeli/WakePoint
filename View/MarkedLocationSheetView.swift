@@ -15,7 +15,7 @@ struct MarkedLocationSheetView: View {
     @Bindable var mapViewModel: MapViewModel
     @Environment(\.dismiss) private var dismiss
     @Bindable var premiumManager: PremiumManager
-    @State var showPremiumNeeded: Bool = false
+    @State var isPaywallPresented: Bool = false
     @State var isSaving: Bool = false
     @State private var hasAppeared = false
     @State var isSavedAlready: Bool = false
@@ -148,7 +148,7 @@ struct MarkedLocationSheetView: View {
                     
                     Button {
                         if !mapViewModel.canSaveNewDestinations {
-                            showPremiumNeeded = true
+                            isPaywallPresented = true
                             mapViewModel.notificationFeedbackGenerator
                                 .notificationOccurred(.error)
                             return
@@ -218,8 +218,10 @@ struct MarkedLocationSheetView: View {
         }
         .padding()
         .interactiveDismissDisabled()
-        .fullScreenCover(isPresented: $showPremiumNeeded) {
-            PaywallView()
+        .fullScreenCover(isPresented: $isPaywallPresented) {
+            PaywallView().onDisappear {
+                premiumManager.checkPremiumStatus()
+            }
         }
         .onChange(of: $mapViewModel.savedDestinations.count) { _, newValue in
             if !premiumManager.isPremium, newValue >= 3 {
@@ -255,7 +257,7 @@ struct MarkedLocationSheetView: View {
             locationManager: LocationManager(),
             mapViewModel: MapViewModel(),
             premiumManager: PremiumManager(),
-            showPremiumNeeded: false,
+            isPaywallPresented: false,
             isSaving: false,
             distanceToUser: "123",
             minutesToUser: "123",

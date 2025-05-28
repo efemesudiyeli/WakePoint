@@ -33,7 +33,6 @@ class MapViewModel: NSObject, MKLocalSearchCompleterDelegate {
     var notificationFeedbackGenerator: UINotificationFeedbackGenerator = .init()
     var searchQuery = ""
     var searchResults: [MKMapItem] = []
-    var relatedSearchResults: [MKMapItem] = []
     var route: MKRoute?
     var isNavigationStarted: Bool = false
     var routeTransportType: MKDirectionsTransportType = .automobile
@@ -44,10 +43,9 @@ class MapViewModel: NSObject, MKLocalSearchCompleterDelegate {
         return completer
     }()
 
-    // MARK: Change here when release
-
-    var isDeveloperMode: Bool = false
-
+    var isDeveloperMode: Bool {
+        (Bundle.main.infoDictionary?["DEVELOPER_MODE"] as? String)?.lowercased() == "true"
+    }
     func centerPositionToLocation(
         position: CLLocationCoordinate2D,
         offset: OffsetPosition = .center,

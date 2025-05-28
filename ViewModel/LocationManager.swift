@@ -13,6 +13,11 @@ import UserNotifications
 
 @Observable
 class LocationManager: NSObject, CLLocationManagerDelegate {
+    enum AlertType: String {
+        case vibration
+        case sound
+    }
+
     private var locationManager = CLLocationManager()
     var currentLocation: CLLocation?
     var destinationCoordinate: CLLocationCoordinate2D?
@@ -20,17 +25,29 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
     var circleDistance: CircleDistance = .long
     var vibrateSeconds: VibrateSeconds = .medium
     var isUserReachedDistance = false
+    var alertType: AlertType = .vibration
+    var isLocationAuthorized: Bool = false
 
     override init() {
         super.init()
         locationManager.delegate = self
         locationManager.requestWhenInUseAuthorization()
+        locationManager.requestAlwaysAuthorization()
         locationManager.startUpdatingLocation()
         locationManager.allowsBackgroundLocationUpdates = true
         locationManager.pausesLocationUpdatesAutomatically = false
         requestNotificationPermission()
     }
-
+    
+    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        switch manager.authorizationStatus {
+        case .authorizedWhenInUse, .authorizedAlways:
+            isLocationAuthorized = true
+        default:
+            isLocationAuthorized = false
+        }
+    }
+    
     func stopBackgroundUpdatingLocation() {
         locationManager.allowsBackgroundLocationUpdates = false
         print("Stopping background updating location")
@@ -41,10 +58,23 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
         print("Starting background updating location")
     }
 
-    func vibratePhone(seconds: Int) {
+    func playAlert(seconds: Int) {
         var elapsed = 0
         Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { timer in
             AudioServicesPlayAlertSound(kSystemSoundID_Vibrate)
+
+            elapsed += 1
+            if elapsed >= seconds {
+                timer.invalidate()
+                self.hasVibrated = false
+            }
+        }
+    }
+
+    func playAlarmSound(seconds: Int) {
+        var elapsed = 0
+        Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { timer in
+            AudioServicesPlaySystemSound(SystemSoundID(1005)) // Or choose any other system sound ID
 
             elapsed += 1
             if elapsed >= seconds {
@@ -63,6 +93,7 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
             .set(circleDistance.rawValue, forKey: "CircleDistance")
         UserDefaults.standard
             .set(vibrateSeconds.rawValue, forKey: "VibrateSeconds")
+        UserDefaults.standard.set(alertType.rawValue, forKey: "AlertType")
     }
 
     func fetchSettings() {
@@ -76,6 +107,11 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
            let seconds = VibrateSeconds(rawValue: rawSeconds)
         {
             vibrateSeconds = seconds
+        }
+
+        if let rawAlert = UserDefaults.standard.string(forKey: "AlertType"),
+           let savedAlertType = AlertType(rawValue: rawAlert) {
+            alertType = savedAlertType
         }
     }
 
@@ -100,7 +136,12 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
             isUserReachedDistance = distance <= circleDistance.rawValue
             if isUserReachedDistance, !hasVibrated {
                 hasVibrated = true
-                vibratePhone(seconds: vibrateSeconds.rawValue)
+                switch alertType {
+                case .vibration:
+                    playAlert(seconds: vibrateSeconds.rawValue)
+                case .sound:
+                    playAlarmSound(seconds: vibrateSeconds.rawValue)
+                }
                 sendWakeUpNotification()
             }
         }

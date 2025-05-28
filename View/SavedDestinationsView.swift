@@ -81,7 +81,9 @@ struct SavedDestinationsView: View {
                 }
 
                 .fullScreenCover(isPresented: $isPaywallPresented) {
-                    PaywallView()
+                    PaywallView().onDisappear {
+                        premiumManager.checkPremiumStatus()
+                    }
                 }
 
             } else {

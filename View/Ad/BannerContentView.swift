@@ -83,7 +83,6 @@ struct BannerViewContainer: UIViewRepresentable {
             let adSize = currentOrientationAnchoredAdaptiveBanner(width: geometry.size.width)
 
             VStack {
-                Spacer()
                 BannerViewContainer(adSize)
                     .frame(height: adSize.size.height)
             }

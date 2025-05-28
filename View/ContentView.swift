@@ -15,35 +15,73 @@ struct ContentView: View {
 
     var body: some View {
         ZStack(alignment: .center) {
-            MapView(
-                mapViewModel: mapViewModel,
-                locationManager: locationManager,
-                premiumManager: premiumManager
-            )
-
-            VStack {
-                Spacer()
-                SearchView(
+            if locationManager.isLocationAuthorized {
+                MapView(
                     mapViewModel: mapViewModel,
                     locationManager: locationManager,
-                    isSearchResultsPresented: $isSearchResultsPresented
+                    premiumManager: premiumManager
                 )
-
-                UtilityButtonsView(
-                    mapViewModel: mapViewModel,
-                    locationManager: locationManager,
-                    isSettingsViewPresented: $isSettingsViewPresented,
-                    isSavedDestinationsViewPresented: $isSavedDestinationsViewPresented
-                )
-
-                if !premiumManager.isPremium {
+            } else {
+                ZStack {
+                    MapView(
+                        mapViewModel: mapViewModel,
+                        locationManager: locationManager,
+                        premiumManager: premiumManager
+                    )
+                    .blur(radius: 20)
+                    .allowsHitTesting(false)
                     VStack {
-                        BannerViewContainer(currentOrientationAnchoredAdaptiveBanner(width: UIScreen.main.bounds.width))
-                            .frame(height: currentOrientationAnchoredAdaptiveBanner(width: UIScreen.main.bounds.width).size.height)
-                    }.frame(height: 50)
+                        VStack {
+                
+                            Text("Please enable location permission.")
+                                .multilineTextAlignment(.center)
+                                .padding()
+                                .cornerRadius(10)
+                                .foregroundColor(Color.primary)
+
+                            Button("Go to settings") {
+                                if let url = URL(string: UIApplication.openSettingsURLString),
+                                   UIApplication.shared.canOpenURL(url) {
+                                    UIApplication.shared.open(url)
+                                }
+                            }
+                            .padding()
+                            .background(Color.oppositePrimary)
+                            .foregroundColor(.primary)
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                        }
+                        .padding()
+                        .background(.ultraThinMaterial)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+
+                        Spacer()
+                    }
+                    .padding()
                 }
             }
-            .frame(width: 380)
+            VStack {
+                VStack {
+                    Spacer()
+                    SearchView(
+                        mapViewModel: mapViewModel,
+                        locationManager: locationManager,
+                        isSearchResultsPresented: $isSearchResultsPresented
+                    )
+                    
+                    UtilityButtonsView(
+                        mapViewModel: mapViewModel,
+                        locationManager: locationManager,
+                        isSettingsViewPresented: $isSettingsViewPresented,
+                        isSavedDestinationsViewPresented: $isSavedDestinationsViewPresented
+                    )
+                }
+                .frame(width: 380)
+                if !premiumManager.isPremium {
+                    Spacer()
+                    BannerViewContainer(currentOrientationAnchoredAdaptiveBanner(width: UIScreen.main.bounds.width))
+                        .frame(height: currentOrientationAnchoredAdaptiveBanner(width: UIScreen.main.bounds.width).size.height)
+                }
+            }
             .sheet(isPresented: $isSavedDestinationsViewPresented) {
                 SavedDestinationsView(
                     mapViewModel: mapViewModel,
@@ -122,6 +160,7 @@ struct ContentView: View {
             }
 
             .onAppear {
+                print(mapViewModel.isDeveloperMode, "devmode")
                 locationManager.fetchSettings()
                 mapViewModel.fetchSettings()
                 mapViewModel.loadDestinations()

@@ -18,59 +18,78 @@ struct SettingsView: View {
 
     var body: some View {
         List {
-            Section {
-                Group {
-                    Picker("Circle Distance", selection: $locationManager.circleDistance) {
-                        ForEach(CircleDistance.allCases.sorted(by: { $0.rawValue < $1.rawValue }), id: \.self) { distance in
-                            Text("\(Int(distance.rawValue)) m")
-                                .tag(distance)
+            Section(header: HStack(spacing: 2) {
+                Text("Premium")
+                .foregroundStyle(
+                    Gradient(
+                        colors: [
+                            Color.indigo,
+                            Color.white,
+                        ]
+                    )
+                )
+                Text("Customizations")
+            }) {
+                Section {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Circle Distance")
+                            .font(.headline)
+                        Picker("", selection: $locationManager.circleDistance) {
+                            ForEach(CircleDistance.allCases.sorted(by: { $0.rawValue < $1.rawValue }), id: \.self) { distance in
+                                Text("\(Int(distance.rawValue)) m").tag(distance)
+                            }
                         }
+                        .pickerStyle(.segmented)
                     }
-                    .pickerStyle(.segmented)
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color(.secondarySystemBackground))
+                    )
                 }
-                .allowsHitTesting(premiumManager.isPremium)
-                .opacity(premiumManager.isPremium ? 1.0 : 0.5)
-
-                Group {
-                    Picker("Vibration Time", selection: $locationManager.vibrateSeconds) {
-                        ForEach(VibrateSeconds.allCases.sorted(by: { $0.rawValue < $1.rawValue }), id: \.self) { distance in
-                            Text("\(Int(distance.rawValue)) seconds")
-                                .tag(distance)
+                .listRowInsets(EdgeInsets())
+                Section {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Alert Time")
+                            .font(.headline)
+                        Picker("", selection: $locationManager.vibrateSeconds) {
+                            ForEach(VibrateSeconds.allCases.sorted(by: { $0.rawValue < $1.rawValue }), id: \.self) { distance in
+                                Text("\(Int(distance.rawValue)) seconds").tag(distance)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+                        .onChange(of: locationManager.vibrateSeconds) { _, newValue in
+                            locationManager.vibrateSeconds = newValue
+                            locationManager.saveSettings()
                         }
                     }
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color(.secondarySystemBackground))
+                    )
+                }
+                .listRowInsets(EdgeInsets())
+                Section(header: Text("Alert Type").bold()) {
+                    Picker("Alert Type", selection: $locationManager.alertType) {
+                        Text("Vibration").tag(LocationManager.AlertType.vibration)
+                        Text("Sound").tag(LocationManager.AlertType.sound)
+                    }
                     .pickerStyle(.segmented)
-                    .onChange(of: locationManager.vibrateSeconds) { _, newValue in
-                        locationManager.vibrateSeconds = newValue
+                    .onChange(of: locationManager.alertType) { _, newValue in
+                        locationManager.alertType = newValue
                         locationManager.saveSettings()
                     }
                 }
-                .allowsHitTesting(premiumManager.isPremium)
-                .opacity(premiumManager.isPremium ? 1.0 : 0.5)
                 
-                Group {
-                    ColorPicker("Color", selection: $mapViewModel.circleColor, supportsOpacity: true)
-                }
-                .allowsHitTesting(premiumManager.isPremium)
-                .opacity(premiumManager.isPremium ? 1.0 : 0.5)
+                ColorPicker("**Color**", selection: $mapViewModel.circleColor, supportsOpacity: true)
 
-              
-
-               
-            } header: {
-                HStack(spacing: 2) {
-                    Text("Premium")
-                    .foregroundStyle(
-                        Gradient(
-                            colors: [
-                                Color.indigo,
-                                Color.white,
-                            ]
-                        )
-                    )
-                    Text("Customizations")
-                }
-             
+                
             }
+
+            
+            .allowsHitTesting(premiumManager.isPremium)
+            .opacity(premiumManager.isPremium ? 1.0 : 0.5)
 
             Button {
                 isCodeRedemptionPresented.toggle()
@@ -121,7 +140,9 @@ struct SettingsView: View {
             print(result)
         }
         .fullScreenCover(isPresented: $isPaywallPresented) {
-            PaywallView()
+            PaywallView().onDisappear {
+                premiumManager.checkPremiumStatus()
+            }
         }
         .onChange(of: locationManager.circleDistance) { _, newValue in
             locationManager.circleDistance = newValue

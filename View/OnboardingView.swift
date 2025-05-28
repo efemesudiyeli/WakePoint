@@ -43,8 +43,6 @@ struct OnboardingView: View {
                     position: $mapCameraPosition,
                     interactionModes: .all,
                     content: {
-                        // Fake User Location Annotation
-
                         Annotation(
                             LocalizedStringKey("You"),
                             coordinate: fakeUserCoordinate
@@ -252,16 +250,8 @@ struct OnboardingView: View {
                             locationManager: locationManager,
                             mapViewModel: mapViewModel,
                             premiumManager: premiumManager,
-                            distanceToUser: distance ?? "N/A",
-                            minutesToUser: minutes ?? "N/A",
-//                            address: Address(
-//                                name: "Santa Monica Freeway",
-//                                locality: "Santa Monica",
-//                                country: "United States",
-//                                city: "Los Angeles",
-//                                postalCode: "90401",
-//                                subLocality: "CA"
-//                            ),
+                            distanceToUser: mapViewModel.destinationDistance ?? "N/A",
+                            minutesToUser: mapViewModel.destinationDistanceMinutes ?? "N/A",
                             coordinates: fakeDestinationCoordinate,
                             route: $route
                         ).onTapGesture {
@@ -282,7 +272,7 @@ struct OnboardingView: View {
                             fakeRoute = mapViewModel.route
                         }
                         if onboardingStep == 3 {
-                            locationManager.vibratePhone(seconds: 2)
+                            locationManager.playAlert(seconds: 2)
 
                             let targetCoordinate = CLLocationCoordinate2D(latitude: 34.014030, longitude: -118.492400)
                             let stepCount = 60
@@ -309,6 +299,23 @@ struct OnboardingView: View {
                     }.frame(maxHeight: .infinity)
                 }
             }
+        }.onAppear {
+            mapViewModel
+                .fetchAddress(for: fakeDestinationCoordinate) { fakeAddress in
+                    mapViewModel
+                        .calculateRoute(
+                            from: fakeUserCoordinate,
+                            to: fakeDestinationCoordinate
+                        )
+                    mapViewModel.destination = Destination(
+                        address: fakeAddress,
+                        coordinate: fakeDestinationCoordinate
+                    )
+                }
+            
+                
+            
+           
         }
     }
 }

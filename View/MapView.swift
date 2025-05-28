@@ -33,7 +33,9 @@ struct MapView: View {
 
                 if let destination = mapViewModel.destination {
                     Annotation(
-                        mapViewModel.destination?.address?.name ?? "Destination",
+                        mapViewModel.destination?.address?.name ?? String(
+                            localized: "Destination"
+                        ),
                         coordinate: destination.coordinate
                     ) {
                         ZStack(alignment: .center) {
