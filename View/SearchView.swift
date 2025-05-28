@@ -23,7 +23,7 @@ struct SearchView: View {
                         ) { item in
                             Button {
                                 mapViewModel.searchQuery = item.title
-                                
+
                                 if let currentLocation = locationManager.currentLocation {
                                     mapViewModel.search(region: MKCoordinateRegion(
                                         center: currentLocation.coordinate,

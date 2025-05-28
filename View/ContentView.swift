@@ -32,7 +32,6 @@ struct ContentView: View {
                     .allowsHitTesting(false)
                     VStack {
                         VStack {
-                
                             Text("Please enable location permission.")
                                 .multilineTextAlignment(.center)
                                 .padding()
@@ -41,7 +40,8 @@ struct ContentView: View {
 
                             Button("Go to settings") {
                                 if let url = URL(string: UIApplication.openSettingsURLString),
-                                   UIApplication.shared.canOpenURL(url) {
+                                   UIApplication.shared.canOpenURL(url)
+                                {
                                     UIApplication.shared.open(url)
                                 }
                             }
@@ -67,7 +67,7 @@ struct ContentView: View {
                         locationManager: locationManager,
                         isSearchResultsPresented: $isSearchResultsPresented
                     )
-                    
+
                     UtilityButtonsView(
                         mapViewModel: mapViewModel,
                         locationManager: locationManager,

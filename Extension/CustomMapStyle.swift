@@ -1,5 +1,5 @@
 //
-//  MyMapStyle.swift
+//  CustomMapStyle.swift
 //  WakePoint
 //
 //  Created by Efe Mesudiyeli on 27.05.2025.
@@ -14,13 +14,13 @@ enum CustomMapStyle: Equatable {
 
     var mapKitStyle: MapStyle {
         switch self {
-        case .standard: return .standard
-        case .hybrid: return .hybrid
-        case .imagery: return .imagery
+        case .standard: .standard
+        case .hybrid: .hybrid
+        case .imagery: .imagery
         }
     }
 
-    static func from(mapStyle: MapStyle) -> CustomMapStyle {
-        return .standard
+    static func from(mapStyle _: MapStyle) -> CustomMapStyle {
+        .standard
     }
 }

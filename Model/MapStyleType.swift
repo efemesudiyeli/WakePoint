@@ -6,6 +6,7 @@
 //
 
 import _MapKit_SwiftUI
+
 enum MapStyleType {
     case standard, hybrid, imagery
 }

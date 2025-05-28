@@ -38,7 +38,7 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
         locationManager.pausesLocationUpdatesAutomatically = false
         requestNotificationPermission()
     }
-    
+
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         switch manager.authorizationStatus {
         case .authorizedWhenInUse, .authorizedAlways:
@@ -47,7 +47,7 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
             isLocationAuthorized = false
         }
     }
-    
+
     func stopBackgroundUpdatingLocation() {
         locationManager.allowsBackgroundLocationUpdates = false
         print("Stopping background updating location")
@@ -110,7 +110,8 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
         }
 
         if let rawAlert = UserDefaults.standard.string(forKey: "AlertType"),
-           let savedAlertType = AlertType(rawValue: rawAlert) {
+           let savedAlertType = AlertType(rawValue: rawAlert)
+        {
             alertType = savedAlertType
         }
     }

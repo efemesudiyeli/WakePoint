@@ -16,6 +16,7 @@ class MapViewModel: NSObject, MKLocalSearchCompleterDelegate {
         case topCenter
         case bottomCenter
     }
+
     var mapStyle: MapStyle = .standard
     var circleColor: Color = .blue.opacity(0.5)
     var position = MapCameraPosition.region(
@@ -46,6 +47,7 @@ class MapViewModel: NSObject, MKLocalSearchCompleterDelegate {
     var isDeveloperMode: Bool {
         (Bundle.main.infoDictionary?["DEVELOPER_MODE"] as? String)?.lowercased() == "true"
     }
+
     func centerPositionToLocation(
         position: CLLocationCoordinate2D,
         offset: OffsetPosition = .center,

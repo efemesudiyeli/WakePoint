@@ -20,14 +20,14 @@ struct SettingsView: View {
         List {
             Section(header: HStack(spacing: 2) {
                 Text("Premium")
-                .foregroundStyle(
-                    Gradient(
-                        colors: [
-                            Color.indigo,
-                            Color.white,
-                        ]
+                    .foregroundStyle(
+                        Gradient(
+                            colors: [
+                                Color.indigo,
+                                Color.white,
+                            ]
+                        )
                     )
-                )
                 Text("Customizations")
             }) {
                 Section {
@@ -81,13 +81,10 @@ struct SettingsView: View {
                         locationManager.saveSettings()
                     }
                 }
-                
-                ColorPicker("**Color**", selection: $mapViewModel.circleColor, supportsOpacity: true)
 
-                
+                ColorPicker("**Color**", selection: $mapViewModel.circleColor, supportsOpacity: true)
             }
 
-            
             .allowsHitTesting(premiumManager.isPremium)
             .opacity(premiumManager.isPremium ? 1.0 : 0.5)
 

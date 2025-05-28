@@ -312,10 +312,6 @@ struct OnboardingView: View {
                         coordinate: fakeDestinationCoordinate
                     )
                 }
-            
-                
-            
-           
         }
     }
 }

@@ -74,8 +74,6 @@ struct MapView: View {
                 MapPitchToggle()
             }
             .mapStyle(mapViewModel.mapStyle)
-            
-
             .onTapGesture { screenCord in
                 guard mapViewModel.destination == nil else {
                     if !mapViewModel.isNavigationStarted {

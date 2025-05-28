@@ -19,12 +19,12 @@ struct MarkedLocationSheetView: View {
     @State var isSaving: Bool = false
     @State private var hasAppeared = false
     @State var isSavedAlready: Bool = false
-    
+
     var distanceToUser: LocalizedStringKey
     var minutesToUser: LocalizedStringKey
     var coordinates: CLLocationCoordinate2D?
     @Binding var route: MKRoute?
-    
+
     var body: some View {
         VStack(alignment: .leading) {
             if mapViewModel.destination?.address == nil {
@@ -34,17 +34,17 @@ struct MarkedLocationSheetView: View {
                     .font(.largeTitle)
                     .fontWeight(.heavy)
                 Text("Marked Location - ") + Text(distanceToUser) + Text(" away")
-                
+
                 Spacer()
-                
+
                 VStack(alignment: .leading) {
                     Text("Details")
                         .font(.largeTitle)
                         .fontWeight(.heavy)
-                    
+
                     Text("Address")
                         .fontWeight(.bold)
-                    
+
                     if let destinationAddress = mapViewModel.destination?.address {
                         Text(
                             [
@@ -55,26 +55,26 @@ struct MarkedLocationSheetView: View {
                                 destinationAddress.country,
                                 destinationAddress.postalCode,
                             ]
-                                .compactMap(\.self)
-                                .joined(separator: ", ")
+                            .compactMap(\.self)
+                            .joined(separator: ", ")
                         )
                         .multilineTextAlignment(.leading)
                         .fixedSize(horizontal: false, vertical: true)
                     }
-                    
+
                     Divider()
-                    
+
                     if let coordinates {
                         Text("Coordinates")
                             .fontWeight(.bold)
                         Text("\(coordinates.latitude), \(coordinates.longitude)")
                     }
                 }
-                
+
                 Spacer()
                 HStack {
                     Spacer()
-                    
+
                     Button {
                         if let currentlocationCoordinate = locationManager.currentLocation?.coordinate, let destinationCoordinate = mapViewModel.destination?.coordinate {
                             mapViewModel
@@ -86,18 +86,18 @@ struct MarkedLocationSheetView: View {
                                 .setVibratePoint(
                                     destinationCoordinate: destinationCoordinate
                                 )
-                            
+
                             dismiss()
                             if let currentLocation = locationManager.currentLocation, let destination = mapViewModel.destination {
                                 let startCoordinate = currentLocation.coordinate
                                 let endCoordinate = destination.coordinate
-                                
+
                                 let middleCoordinateCalculation = mapViewModel
                                     .calculateMiddleCoordinate(
                                         startCoordinate: startCoordinate,
                                         endCoordinate: endCoordinate
                                     )
-                                
+
                                 mapViewModel.centerPositionToLocation(
                                     position: middleCoordinateCalculation.center,
                                     spanLatDelta: middleCoordinateCalculation.spanLat,
@@ -109,7 +109,7 @@ struct MarkedLocationSheetView: View {
                         if mapViewModel.route != nil {
                             VStack(spacing: 5) {
                                 Image(systemName: "play.fill")
-                                
+
                                 Text(mapViewModel.route == nil ? "N/A" : minutesToUser)
                                     .bold()
                             }
@@ -121,7 +121,7 @@ struct MarkedLocationSheetView: View {
                         } else if mapViewModel.routeCantFound {
                             VStack(spacing: 5) {
                                 Image(systemName: "exclamationmark.magnifyingglass")
-                                
+
                                 Text("N/A")
                                     .bold()
                             }
@@ -133,7 +133,7 @@ struct MarkedLocationSheetView: View {
                         } else {
                             VStack(spacing: 5) {
                                 ProgressView()
-                                
+
                                 Text("Loading")
                                     .bold()
                             }
@@ -143,9 +143,9 @@ struct MarkedLocationSheetView: View {
                                 RoundedRectangle(cornerRadius: 12)
                             )
                         }
-                        
+
                     }.disabled(isOnboarding || mapViewModel.route == nil)
-                    
+
                     Button {
                         if !mapViewModel.canSaveNewDestinations {
                             isPaywallPresented = true
@@ -192,7 +192,7 @@ struct MarkedLocationSheetView: View {
                             RoundedRectangle(cornerRadius: 12)
                         )
                     }.disabled(isOnboarding || isSavedAlready)
-                    
+
                     Button {
                         dismiss()
                         mapViewModel.destination = nil
@@ -233,12 +233,12 @@ struct MarkedLocationSheetView: View {
         .onAppear {
             guard !hasAppeared else { return } // Temporary Solution
             hasAppeared = true
-            
+
             isSavedAlready = mapViewModel.savedDestinations
                 .contains(where: { element in
                     element == mapViewModel.destination
                 })
-            
+
             if !premiumManager.isPremium, mapViewModel.savedDestinations.count >= 3 {
                 mapViewModel.canSaveNewDestinations = false
             } else {
