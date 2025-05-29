@@ -18,7 +18,7 @@ struct SavedDestinationsView: View {
     var body: some View {
         VStack {
             if !mapViewModel.savedDestinations.isEmpty {
-                VStack {
+                VStack(alignment: .leading) {
                     VStack(alignment: .leading) {
                         Text("Saved Destinations")
                             .font(.title)
@@ -27,7 +27,7 @@ struct SavedDestinationsView: View {
                             .font(.footnote)
                             .foregroundStyle(.gray)
                     }
-                    .padding(.top)
+                   
 
                     List {
                         ForEach(mapViewModel.savedDestinations, id: \.id) { destination in
@@ -60,7 +60,7 @@ struct SavedDestinationsView: View {
                                 }
                             }
                         }
-
+                       
                         if !premiumManager.isPremium, mapViewModel.savedDestinations.count >= 3 {
                             Button {
                                 isPaywallPresented.toggle()
@@ -78,6 +78,8 @@ struct SavedDestinationsView: View {
                                 .listRowSeparatorTint(.primary)
                         }
                     }
+                        
+                      
                 }
 
                 .fullScreenCover(isPresented: $isPaywallPresented) {
@@ -88,13 +90,40 @@ struct SavedDestinationsView: View {
 
             } else {
                 VStack {
+                    Spacer()
                     Text("😔")
                         .font(.largeTitle)
                     Text("There is no saved destinations yet.")
-                }
+                    Spacer()
+                }.frame(maxWidth: .infinity)
             }
-        }.presentationDetents([PresentationDetent.medium])
-            .presentationBackgroundInteraction(.disabled)
-            .presentationDragIndicator(.hidden)
+        }
+        
+        .overlay(alignment: .topTrailing) {
+            Button {
+                dismiss()
+            } label: {
+                Image(systemName: "xmark.circle.fill")
+                    .resizable()
+                    .foregroundStyle(.gray)
+            }.frame(width: 25, height: 25)
+        }
+        .interactiveDismissDisabled()
+        .presentationDragIndicator(.hidden)
+        .padding()
+        .presentationDetents([.medium, .large])
+        .presentationBackgroundInteraction(.disabled)
+        
     }
+}
+
+#Preview {
+    SavedDestinationsView(
+        mapViewModel: MapViewModel(),
+        locationManager: LocationManager(),
+        premiumManager: PremiumManager(),
+        dismiss: Environment(\.dismiss),
+        isMarkedLocationSheetViewPresented: .constant(true),
+        isPaywallPresented: false
+    )
 }

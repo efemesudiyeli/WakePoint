@@ -10,6 +10,7 @@ import StoreKit
 import SwiftUI
 
 struct SettingsView: View {
+    @Environment(\.dismiss) private var dismiss
     @Bindable var locationManager: LocationManager
     @Bindable var mapViewModel: MapViewModel
     @Bindable var premiumManager: PremiumManager
@@ -17,6 +18,9 @@ struct SettingsView: View {
     @State var isCodeRedemptionPresented: Bool = false
 
     var body: some View {
+        ZStack {
+            
+      
         List {
             Section(header: HStack(spacing: 2) {
                 Text("Premium")
@@ -128,10 +132,21 @@ struct SettingsView: View {
                 }
             }
         }
-
+        }
+        .overlay(alignment: .topTrailing) {
+            Button {
+                dismiss()
+            } label: {
+                Image(systemName: "xmark.circle.fill")
+                    .resizable()
+                    .foregroundStyle(.gray)
+            }.frame(width: 25, height: 25)
+        }
+        .padding([.top,.horizontal])
+        .interactiveDismissDisabled()
         .presentationDetents([PresentationDetent.medium])
         .presentationBackgroundInteraction(.disabled)
-        .presentationDragIndicator(.visible)
+        .presentationDragIndicator(.hidden)
         .listStyle(.insetGrouped)
         .offerCodeRedemption(isPresented: $isCodeRedemptionPresented) { result in
             print(result)
