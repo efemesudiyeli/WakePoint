@@ -6,6 +6,13 @@
 //
 
 import SwiftUI
+import StoreKit
+
+func requestReviewIfAppropriate() {
+    if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
+        SKStoreReviewController.requestReview(in: windowScene)
+    }
+}
 
 struct WakeUpView: View {
     var body: some View {
@@ -17,6 +24,9 @@ struct WakeUpView: View {
         .presentationDetents([PresentationDetent.medium])
         .presentationBackgroundInteraction(.enabled)
         .presentationDragIndicator(.visible)
+        .onAppear {
+            requestReviewIfAppropriate()
+        }
     }
 }
 

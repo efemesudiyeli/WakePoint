@@ -17,6 +17,12 @@ struct SettingsView: View {
     @State var isPaywallPresented: Bool = false
     @State var isCodeRedemptionPresented: Bool = false
 
+    func requestReviewIfAppropriate() {
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
+            SKStoreReviewController.requestReview(in: windowScene)
+        }
+    }
+    
     var body: some View {
         ZStack {
             
@@ -36,8 +42,11 @@ struct SettingsView: View {
             }) {
                 Section {
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("Circle Distance")
-                            .font(.headline)
+                        HStack {
+                            Image(systemName: "circle.circle")
+                            Text("Circle Distance")
+                                .font(.headline)
+                        }
                         Picker("", selection: $locationManager.circleDistance) {
                             ForEach(CircleDistance.allCases.sorted(by: { $0.rawValue < $1.rawValue }), id: \.self) { distance in
                                 Text("\(Int(distance.rawValue)) m").tag(distance)
@@ -54,8 +63,11 @@ struct SettingsView: View {
                 .listRowInsets(EdgeInsets())
                 Section {
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("Alert Time")
-                            .font(.headline)
+                        HStack {
+                            Image(systemName: "timer")
+                            Text("Alert Time")
+                                .font(.headline)
+                        }
                         Picker("", selection: $locationManager.vibrateSeconds) {
                             ForEach(VibrateSeconds.allCases.sorted(by: { $0.rawValue < $1.rawValue }), id: \.self) { distance in
                                 Text("\(Int(distance.rawValue)) seconds").tag(distance)
@@ -74,7 +86,11 @@ struct SettingsView: View {
                     )
                 }
                 .listRowInsets(EdgeInsets())
-                Section(header: Text("Alert Type").bold()) {
+                Section {
+                     HStack {
+                         Image(systemName: "bell")
+                         Text("Alert Type").font(.headline)
+                     }
                     Picker("Alert Type", selection: $locationManager.alertType) {
                         Text("Vibration").tag(LocationManager.AlertType.vibration)
                         Text("Sound").tag(LocationManager.AlertType.sound)
@@ -85,25 +101,47 @@ struct SettingsView: View {
                         locationManager.saveSettings()
                     }
                 }
-
-                ColorPicker("**Color**", selection: $mapViewModel.circleColor, supportsOpacity: true)
+                ColorPicker(
+                    selection: $mapViewModel.circleColor,
+                    supportsOpacity: true) {
+                        HStack {
+                            Image(systemName: "paintpalette")
+                            Text("Color").font(.headline)
+                        }
+                    }
             }
 
             .allowsHitTesting(premiumManager.isPremium)
             .opacity(premiumManager.isPremium ? 1.0 : 0.5)
 
-            Button {
-                isCodeRedemptionPresented.toggle()
-            } label: {
-                Text("Redeem Promotion Code")
-            }
-
-            if !premiumManager.isPremium {
-                Section {
-                    Button {
-                        isPaywallPresented.toggle()
-                    } label: {
-                        Label("Buy Premium", systemImage: "star.circle")
+            Section {
+                Button {
+                    isCodeRedemptionPresented.toggle()
+                } label: {
+                    HStack {
+                        Image(systemName: "gift")
+                        Text("Redeem Promotion Code")
+                    }
+                }
+                
+                Button {
+                    requestReviewIfAppropriate()
+                } label: {
+                    HStack {
+                        Image(systemName: "star")
+                        Text("Rate This App")
+                    }
+                }
+                
+                if !premiumManager.isPremium {
+                    Section {
+                        Button {
+                            isPaywallPresented.toggle()
+                        } label: {
+                            HStack {
+                                Image(systemName: "star.circle")
+                                Text("Buy Premium")
+                            }
                             .foregroundStyle(
                                 Gradient(
                                     colors: [
@@ -112,25 +150,25 @@ struct SettingsView: View {
                                     ]
                                 )
                             )
+                        }
                     }
                 }
-            }
 
-            if mapViewModel.isDeveloperMode {
-                Section {
+                if mapViewModel.isDeveloperMode {
                     Button {
                         premiumManager.isPremium.toggle()
                     } label: {
-                        HStack(spacing: 4) {
-                            Text("Toggle Premium")
-                            Text("\(premiumManager.isPremium)")
+                        HStack {
+                            Image(systemName: "wand.and.stars")
+                            Text("Toggle Premium \(premiumManager.isPremium)")
                         }
                     }
-
-                } header: {
-                    Text("DEVELOPER MODE")
                 }
+            } header: {
+                Text("Feedback & Extras")
             }
+
+           
         }
         }
         .overlay(alignment: .topTrailing) {

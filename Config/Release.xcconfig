@@ -1,0 +1,12 @@
+//
+//  Config.xcconfig
+//  WakePoint
+//
+//  Created by Efe Mesudiyeli on 23.05.2025.
+//
+// PRODUCTION
+
+REVENUECAT_API_KEY = appl_quarfdqGuaBAGpQEZgHTPkwMnKf
+GADApplicationIdentifier = ca-app-pub-7178351830795639~2121920785
+BANNER_AD_UNIT_ID = ca-app-pub-7178351830795639/5410413191
+DEVELOPER_MODE = false
