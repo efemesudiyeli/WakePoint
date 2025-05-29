@@ -22,7 +22,7 @@ struct CustomTextFieldStyle: TextFieldStyle {
             Button {
                 searchQuery = ""
             } label: {
-                Text("x")
+                Image(systemName: "xmark")
             }.disabled(searchQuery.isEmpty)
         }
         .frame(maxWidth: .infinity)
