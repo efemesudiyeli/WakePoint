@@ -14,6 +14,8 @@ struct SavedDestinationsView: View {
     @Environment(\.dismiss) var dismiss
     @Binding var isMarkedLocationSheetViewPresented: Bool
     @State var isPaywallPresented: Bool = false
+    @State private var destinationToRename: Destination?
+    @State private var newName: String = ""
 
     var body: some View {
         VStack {
@@ -27,7 +29,7 @@ struct SavedDestinationsView: View {
                             .font(.footnote)
                             .foregroundStyle(.gray)
                     }
-                   
+                    .padding(.horizontal)
 
                     List {
                         ForEach(mapViewModel.savedDestinations, id: \.id) { destination in
@@ -58,6 +60,14 @@ struct SavedDestinationsView: View {
                                 } label: {
                                     Image(systemName: "trash")
                                 }
+                                
+                                Button {
+                                    destinationToRename = destination
+                                    newName = destination.address?.name ?? ""
+                                } label: {
+                                    Image(systemName: "pencil")
+                                }
+                                .tint(.blue)
                             }
                         }
                        
@@ -74,20 +84,17 @@ struct SavedDestinationsView: View {
                                             ]
                                         )
                                     )
-                            }.listRowSeparator(.visible, edges: .top)
-                                .listRowSeparatorTint(.primary)
+                            }
+                            .listRowSeparator(.visible, edges: .top)
+                            .listRowSeparatorTint(.primary)
                         }
                     }
-                        
-                      
                 }
-
                 .fullScreenCover(isPresented: $isPaywallPresented) {
                     PaywallView().onDisappear {
                         premiumManager.checkPremiumStatus()
                     }
                 }
-
             } else {
                 VStack {
                     Spacer()
@@ -95,10 +102,25 @@ struct SavedDestinationsView: View {
                         .font(.largeTitle)
                     Text("There is no saved destinations yet.")
                     Spacer()
-                }.frame(maxWidth: .infinity)
+                }
+                .frame(maxWidth: .infinity)
             }
         }
-        
+        .alert("Rename Destination", isPresented: Binding(
+            get: { destinationToRename != nil },
+            set: { if !$0 { destinationToRename = nil } }
+        )) {
+            TextField("New name", text: $newName)
+            Button("Cancel", role: .cancel) {
+                destinationToRename = nil
+            }
+            Button("Rename") {
+                if let destination = destinationToRename {
+                    mapViewModel.renameDestination(destination: destination, newName: newName)
+                }
+                destinationToRename = nil
+            }
+        }
         .overlay(alignment: .topTrailing) {
             Button {
                 dismiss()
@@ -106,14 +128,14 @@ struct SavedDestinationsView: View {
                 Image(systemName: "xmark.circle.fill")
                     .resizable()
                     .foregroundStyle(.gray)
-            }.frame(width: 25, height: 25)
+            }
+            .frame(width: 25, height: 25)
+            .padding()
         }
         .interactiveDismissDisabled()
         .presentationDragIndicator(.hidden)
-        .padding()
         .presentationDetents([.medium, .large])
         .presentationBackgroundInteraction(.disabled)
-        
     }
 }
 
@@ -122,8 +144,6 @@ struct SavedDestinationsView: View {
         mapViewModel: MapViewModel(),
         locationManager: LocationManager(),
         premiumManager: PremiumManager(),
-        dismiss: Environment(\.dismiss),
-        isMarkedLocationSheetViewPresented: .constant(true),
-        isPaywallPresented: false
+        isMarkedLocationSheetViewPresented: .constant(true)
     )
 }

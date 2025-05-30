@@ -210,6 +210,12 @@ struct SettingsView: View {
         .listStyle(.insetGrouped)
         .offerCodeRedemption(isPresented: $isCodeRedemptionPresented) { result in
             print(result)
+        }.onChange(of: isCodeRedemptionPresented) { _, newValue in
+            if !newValue {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                    premiumManager.checkPremiumStatus()
+                }
+            }
         }
         .fullScreenCover(isPresented: $isPaywallPresented) {
             PaywallView().onDisappear {

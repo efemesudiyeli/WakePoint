@@ -277,4 +277,23 @@ class MapViewModel: NSObject, MKLocalSearchCompleterDelegate {
             }
         }
     }
+
+    func renameDestination(destination: Destination, newName: String) {
+        if let index = savedDestinations.firstIndex(where: { $0.id == destination.id }) {
+            var updatedDestination = destination
+            if updatedDestination.address == nil {
+                updatedDestination.address = Address(name: newName)
+            } else {
+                updatedDestination.address?.name = newName
+            }
+            savedDestinations[index] = updatedDestination
+            
+            do {
+                let data = try JSONEncoder().encode(savedDestinations)
+                UserDefaults.standard.set(data, forKey: "SavedDestinations")
+            } catch {
+                print("Failed to save destinations after renaming: \(error.localizedDescription)")
+            }
+        }
+    }
 }

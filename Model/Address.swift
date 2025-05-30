@@ -6,10 +6,10 @@
 //
 
 struct Address: Codable {
-    let name: String?
-    let locality: String?
-    let country: String?
-    let city: String?
-    let postalCode: String?
-    let subLocality: String?
+    var name: String?
+    var locality: String?
+    var country: String?
+    var city: String?
+    var postalCode: String?
+    var subLocality: String?
 }
