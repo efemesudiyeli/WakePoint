@@ -16,6 +16,8 @@ struct SettingsView: View {
     @Bindable var premiumManager: PremiumManager
     @State var isPaywallPresented: Bool = false
     @State var isCodeRedemptionPresented: Bool = false
+    @State var isRestorePurchaseAlertPresented: Bool = false
+    
 
     func requestReviewIfAppropriate() {
         if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
@@ -125,6 +127,19 @@ struct SettingsView: View {
                 }
                 
                 Button {
+                    premiumManager.tryRestorePurchases() { success in
+                        if success {
+                            isRestorePurchaseAlertPresented = true
+                        }
+                    }
+                } label: {
+                    HStack {
+                        Image(systemName: "checkmark.arrow.trianglehead.counterclockwise")
+                        Text("Restore Purchases")
+                    }
+                }
+                
+                Button {
                     requestReviewIfAppropriate()
                 } label: {
                     HStack {
@@ -180,6 +195,13 @@ struct SettingsView: View {
                     .foregroundStyle(.gray)
             }.frame(width: 25, height: 25)
         }
+        .alert(
+            "Purchase Restored",
+            isPresented: $isRestorePurchaseAlertPresented,
+            actions: {
+                Text("OK")
+            }
+        )
         .padding([.top,.horizontal])
         .interactiveDismissDisabled()
         .presentationDetents([PresentationDetent.medium])

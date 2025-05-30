@@ -23,6 +23,20 @@ class PremiumManager {
         Purchases.configure(withAPIKey: apiKey)
         checkPremiumStatus()
     }
+    
+    func tryRestorePurchases(completion: @escaping (Bool) -> Void) {
+        Purchases.shared.restorePurchases { customerInfo, error in
+            if let info = customerInfo {
+                DispatchQueue.main.async {
+                    self.isPremium = info.entitlements["Premium"]?.isActive == true
+                    completion(self.isPremium)
+                }
+            } else if let error = error {
+                print("Restore failed: \(error.localizedDescription)")
+                completion(false)
+            }
+        }
+    }
 
     func checkPremiumStatus() {
         Purchases.shared.getCustomerInfo { customerInfo, error in
