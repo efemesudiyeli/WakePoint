@@ -16,6 +16,7 @@ struct SavedDestinationsView: View {
     @State var isPaywallPresented: Bool = false
     @State private var destinationToRename: Destination?
     @State private var newName: String = ""
+    @State private var isRenaming: Bool = false
 
     var body: some View {
         VStack {
@@ -29,7 +30,7 @@ struct SavedDestinationsView: View {
                             .font(.footnote)
                             .foregroundStyle(.gray)
                     }
-                    .padding(.horizontal)
+                    .padding()
 
                     List {
                         ForEach(mapViewModel.savedDestinations, id: \.id) { destination in
@@ -64,6 +65,7 @@ struct SavedDestinationsView: View {
                                 Button {
                                     destinationToRename = destination
                                     newName = destination.address?.name ?? ""
+                                    isRenaming = true
                                 } label: {
                                     Image(systemName: "pencil")
                                 }
@@ -106,20 +108,35 @@ struct SavedDestinationsView: View {
                 .frame(maxWidth: .infinity)
             }
         }
-        .alert("Rename Destination", isPresented: Binding(
-            get: { destinationToRename != nil },
-            set: { if !$0 { destinationToRename = nil } }
-        )) {
-            TextField("New name", text: $newName)
-            Button("Cancel", role: .cancel) {
-                destinationToRename = nil
-            }
-            Button("Rename") {
-                if let destination = destinationToRename {
-                    mapViewModel.renameDestination(destination: destination, newName: newName)
+        .sheet(isPresented: $isRenaming) {
+            NavigationView {
+                Form {
+                    Section {
+                        TextField("New name", text: $newName)
+                    }
                 }
-                destinationToRename = nil
+                .navigationTitle("Rename Destination")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Cancel") {
+                            isRenaming = false
+                            destinationToRename = nil
+                        }
+                    }
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Rename") {
+                            if let destination = destinationToRename {
+                                mapViewModel.renameDestination(destination: destination, newName: newName)
+                            }
+                            isRenaming = false
+                            destinationToRename = nil
+                        }
+                    }
+                }
             }
+            .presentationDetents([.height(200)])
+            .presentationBackgroundInteraction(.disabled)
         }
         .overlay(alignment: .topTrailing) {
             Button {
