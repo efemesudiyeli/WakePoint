@@ -7,9 +7,9 @@
 
 import AudioToolbox
 import CoreLocation
-import SwiftUICore
 import UIKit
 import UserNotifications
+import SwiftUI
 
 @Observable
 class LocationManager: NSObject, CLLocationManagerDelegate {
@@ -27,6 +27,7 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
     var isUserReachedDistance = false
     var alertType: AlertType = .vibration
     var isLocationAuthorized: Bool = false
+    var isNavigationActive: Bool = false
 
     override init() {
         super.init()
@@ -56,6 +57,28 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
     func startBackgroundUpdatingLocation() {
         locationManager.allowsBackgroundLocationUpdates = true
         print("Starting background updating location")
+    }
+
+    func handleScenePhase(_ phase: ScenePhase) {
+        switch phase {
+        case .active:
+            if isNavigationActive {
+                locationManager.allowsBackgroundLocationUpdates = true
+            }
+        case .background:
+            if !isNavigationActive {
+                locationManager.allowsBackgroundLocationUpdates = false
+            }
+        case .inactive:
+            break
+        @unknown default:
+            break
+        }
+    }
+
+    func setNavigationActive(_ active: Bool) {
+        isNavigationActive = active
+        locationManager.allowsBackgroundLocationUpdates = active
     }
 
     func playAlert(seconds: Int) {
@@ -161,5 +184,6 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
     func resetDestination() {
         isUserReachedDistance = false
         destinationCoordinate = nil
+        stopBackgroundUpdatingLocation()
     }
 }

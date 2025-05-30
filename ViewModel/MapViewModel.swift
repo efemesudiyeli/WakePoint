@@ -287,9 +287,9 @@ class MapViewModel: NSObject, MKLocalSearchCompleterDelegate {
                 } else {
                     updatedDestination.address?.name = newName
                 }
-                savedDestinations[index] = updatedDestination
                 
                 do {
+                    savedDestinations[index] = updatedDestination
                     let data = try JSONEncoder().encode(savedDestinations)
                     UserDefaults.standard.set(data, forKey: "SavedDestinations")
                 } catch {

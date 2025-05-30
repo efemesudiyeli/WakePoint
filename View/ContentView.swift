@@ -12,6 +12,7 @@ struct ContentView: View {
     @State private var isSavedDestinationsViewPresented = false
     @State private var isSearchResultsPresented = false
     @Binding var hasLaunchedBefore: Bool
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         ZStack(alignment: .center) {
@@ -22,42 +23,11 @@ struct ContentView: View {
                     premiumManager: premiumManager
                 )
             } else {
-                ZStack {
-                    MapView(
-                        mapViewModel: mapViewModel,
-                        locationManager: locationManager,
-                        premiumManager: premiumManager
-                    )
-                    .blur(radius: 20)
-                    .allowsHitTesting(false)
-                    VStack {
-                        VStack {
-                            Text("Please enable location permission.")
-                                .multilineTextAlignment(.center)
-                                .padding()
-                                .cornerRadius(10)
-                                .foregroundColor(Color.primary)
-
-                            Button("Go to settings") {
-                                if let url = URL(string: UIApplication.openSettingsURLString),
-                                   UIApplication.shared.canOpenURL(url)
-                                {
-                                    UIApplication.shared.open(url)
-                                }
-                            }
-                            .padding()
-                            .background(Color.oppositePrimary)
-                            .foregroundColor(.primary)
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
-                        }
-                        .padding()
-                        .background(.ultraThinMaterial)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-
-                        Spacer()
-                    }
-                    .padding()
-                }
+                LocationPermissionView(
+                    mapViewModel: mapViewModel,
+                    locationManager: locationManager,
+                    premiumManager: premiumManager
+                )
             }
             VStack {
                 VStack {
@@ -177,6 +147,14 @@ struct ContentView: View {
                     }
                 }
             }
+
+            
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            locationManager.handleScenePhase(newPhase)
+        }
+        .onChange(of: mapViewModel.isNavigationStarted) { _, isStarted in
+            locationManager.setNavigationActive(isStarted)
         }
     }
 }
@@ -184,3 +162,5 @@ struct ContentView: View {
 #Preview {
     ContentView(hasLaunchedBefore: .constant(true))
 }
+
+

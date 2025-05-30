@@ -120,18 +120,23 @@ struct SavedDestinationsView: View {
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) {
                         Button("Cancel") {
-                            isRenaming = false
-                            destinationToRename = nil
+                            withAnimation {
+                                isRenaming = false
+                                destinationToRename = nil
+                            }
                         }
                     }
                     ToolbarItem(placement: .confirmationAction) {
                         Button("Rename") {
-                            if let destination = destinationToRename {
-                                mapViewModel.renameDestination(destination: destination, newName: newName)
+                            if let destination = destinationToRename, !newName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                                withAnimation {
+                                    mapViewModel.renameDestination(destination: destination, newName: newName)
+                                    isRenaming = false
+                                    destinationToRename = nil
+                                }
                             }
-                            isRenaming = false
-                            destinationToRename = nil
                         }
+                        .disabled(newName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     }
                 }
             }
